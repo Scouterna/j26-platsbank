@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authenticated/requests/index'
 import { Route as AuthenticatedRequestsNewRouteImport } from './routes/_authenticated/requests/new'
+import { Route as AuthenticatedRequestsRequestIdEditRouteImport } from './routes/_authenticated/requests/$requestId.edit'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -47,6 +48,12 @@ const AuthenticatedRequestsNewRoute =
     path: '/requests/new',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRequestsRequestIdEditRoute =
+  AuthenticatedRequestsRequestIdEditRouteImport.update({
+    id: '/requests/$requestId/edit',
+    path: '/requests/$requestId/edit',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests/': typeof AuthenticatedRequestsIndexRoute
+  '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,6 +69,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests': typeof AuthenticatedRequestsIndexRoute
+  '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,12 +79,25 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/_authenticated/requests/new': typeof AuthenticatedRequestsNewRoute
   '/_authenticated/requests/': typeof AuthenticatedRequestsIndexRoute
+  '/_authenticated/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/unauthorized' | '/requests/new' | '/requests/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/unauthorized'
+    | '/requests/new'
+    | '/requests/'
+    | '/requests/$requestId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/unauthorized' | '/requests/new' | '/requests'
+  to:
+    | '/'
+    | '/about'
+    | '/unauthorized'
+    | '/requests/new'
+    | '/requests'
+    | '/requests/$requestId/edit'
   id:
     | '__root__'
     | '/'
@@ -84,6 +106,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/_authenticated/requests/new'
     | '/_authenticated/requests/'
+    | '/_authenticated/requests/$requestId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,17 +160,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRequestsNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/requests/$requestId/edit': {
+      id: '/_authenticated/requests/$requestId/edit'
+      path: '/requests/$requestId/edit'
+      fullPath: '/requests/$requestId/edit'
+      preLoaderRoute: typeof AuthenticatedRequestsRequestIdEditRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedRequestsNewRoute: typeof AuthenticatedRequestsNewRoute
   AuthenticatedRequestsIndexRoute: typeof AuthenticatedRequestsIndexRoute
+  AuthenticatedRequestsRequestIdEditRoute: typeof AuthenticatedRequestsRequestIdEditRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRequestsNewRoute: AuthenticatedRequestsNewRoute,
   AuthenticatedRequestsIndexRoute: AuthenticatedRequestsIndexRoute,
+  AuthenticatedRequestsRequestIdEditRoute:
+    AuthenticatedRequestsRequestIdEditRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

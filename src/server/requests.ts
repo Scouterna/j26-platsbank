@@ -47,6 +47,12 @@ export const getRequests = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+export const getRequest = createServerFn({ method: "GET" })
+	.inputValidator((input: { id: string }) => input)
+	.handler(async ({ data }) => {
+		return prisma.request.findUnique({ where: { id: data.id } });
+	});
+
 interface CreateRequestInput {
 	title: string;
 	description: string;
@@ -72,6 +78,39 @@ export const createRequest = createServerFn({ method: "POST" })
 				location: data.location ?? null,
 				createdBy: user.sub,
 				creatorName: user.name,
+			},
+		});
+	});
+
+interface UpdateRequestInput {
+	id: string;
+	title: string;
+	description: string;
+	startTime: string;
+	endTime: string;
+	peopleNeeded: number;
+	location?: string;
+}
+
+export const updateRequest = createServerFn({ method: "POST" })
+	.inputValidator((input: UpdateRequestInput) => input)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const request = await prisma.request.findUnique({ where: { id: data.id } });
+		if (!request) throw new Response("Not Found", { status: 404 });
+		const isAdmin = user.roles.includes("admin");
+		const isOwner =
+			request.createdBy === user.sub && user.roles.includes("requests:create");
+		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
+		return prisma.request.update({
+			where: { id: data.id },
+			data: {
+				title: data.title,
+				description: data.description,
+				startTime: new Date(data.startTime),
+				endTime: new Date(data.endTime),
+				peopleNeeded: data.peopleNeeded,
+				location: data.location ?? null,
 			},
 		});
 	});

@@ -2,6 +2,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -578,14 +579,26 @@ function RequestsPage() {
 
 								<Box mt={2} pt={2} borderTop={1} borderColor="divider">
 									{isOwner ? (
-										<Button
-											fullWidth
-											variant="outlined"
-											color="error"
-											onClick={() => setPendingDeleteId(req.id)}
-										>
-											Avbryt förfrågan
-										</Button>
+										<Box display="flex" gap={1}>
+											<Button
+												variant="outlined"
+												startIcon={<EditIcon />}
+												component={Link as any}
+												to="/requests/$requestId/edit"
+												params={{ requestId: req.id }}
+												sx={{ flex: 1 }}
+											>
+												Redigera
+											</Button>
+											<Button
+												variant="outlined"
+												color="error"
+												onClick={() => setPendingDeleteId(req.id)}
+												sx={{ flex: 1 }}
+											>
+												Avbryt förfrågan
+											</Button>
+										</Box>
 									) : isRouterLoading ? (
 										<Skeleton variant="rounded" height={36} />
 									) : isSignedUp ? (
