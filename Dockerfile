@@ -18,11 +18,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Regenerate Prisma client for the current schema
-RUN node_modules/.bin/prisma generate
+# Regenerate Prisma client for the current schema.
+# DATABASE_URL is required by prisma.config.ts at config-load time even
+# though generate never connects to the database.
+RUN DATABASE_URL=postgresql://build-placeholder node_modules/.bin/prisma generate
 
 # Produces the Nitro server bundle in .output/
-RUN pnpm build
+RUN DATABASE_URL=postgresql://build-placeholder pnpm build
 
 # ── Stage 3: production image ─────────────────────────────────────────────────
 FROM node:22-alpine AS runner
