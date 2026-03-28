@@ -21,10 +21,12 @@ export const getUserStatus = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export async function requireUser(): Promise<AppUser> {
-	const token = getCookie("j26-auth_access-token");
-	if (!token) throw new Response("Unauthorized", { status: 401 });
-	const user = await verifyAndGetUser(token);
-	if (!user) throw new Response("Forbidden", { status: 403 });
-	return user;
-}
+export const requireUser = createServerFn({ method: "GET" }).handler(
+	async (): Promise<AppUser> => {
+		const token = getCookie("j26-auth_access-token");
+		if (!token) throw new Response("Unauthorized", { status: 401 });
+		const user = await verifyAndGetUser(token);
+		if (!user) throw new Response("Forbidden", { status: 403 });
+		return user;
+	},
+);
