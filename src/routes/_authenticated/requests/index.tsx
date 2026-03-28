@@ -4,6 +4,11 @@ import {
 	Card,
 	CardContent,
 	Chip,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
 	IconButton,
 	Stack,
 	Tooltip,
@@ -14,6 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PeopleIcon from "@mui/icons-material/People";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { useUser } from "#/lib/user-context";
 import { deleteRequest, getRequests } from "#/server/requests";
 
@@ -34,9 +40,12 @@ function RequestsPage() {
 	const requests = Route.useLoaderData();
 	const user = useUser();
 	const router = useRouter();
+	const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-	async function handleDelete(id: string) {
-		await deleteRequest({ data: { id } });
+	async function handleDeleteConfirm() {
+		if (!pendingDeleteId) return;
+		await deleteRequest({ data: { id: pendingDeleteId } });
+		setPendingDeleteId(null);
 		router.invalidate();
 	}
 
@@ -101,7 +110,7 @@ function RequestsPage() {
 											<IconButton
 												size="small"
 												color="error"
-												onClick={() => handleDelete(req.id)}
+												onClick={() => setPendingDeleteId(req.id)}
 											>
 												<DeleteIcon fontSize="small" />
 											</IconButton>
@@ -113,6 +122,21 @@ function RequestsPage() {
 					))}
 				</Stack>
 			)}
-		</Box>
+
+		<Dialog open={pendingDeleteId !== null} onClose={() => setPendingDeleteId(null)}>
+			<DialogTitle>Ta bort förfrågan?</DialogTitle>
+			<DialogContent>
+				<DialogContentText>
+					Är du säker på att du vill ta bort förfrågan? Det går inte att ångra.
+				</DialogContentText>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={() => setPendingDeleteId(null)}>Avbryt</Button>
+				<Button color="error" onClick={handleDeleteConfirm}>
+					Ta bort
+				</Button>
+			</DialogActions>
+		</Dialog>
+	</Box>
 	);
 }
