@@ -1,12 +1,48 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "#/db";
+import { verifyAndGetUser } from "#/lib/auth";
 import { requireUser } from "#/server/auth";
 
 export const getRequests = createServerFn({ method: "GET" }).handler(
 	async () => {
-		await requireUser();
-		return prisma.request.findMany({
+		const token = getCookie("j26-auth_access-token");
+		const user = token ? await verifyAndGetUser(token) : null;
+
+		const requests = await prisma.request.findMany({
 			orderBy: { startTime: "asc" },
+			include: {
+				signups: {
+					select: {
+						userId: true,
+						userName: true,
+						scoutGroup: true,
+						comment: true,
+					},
+				},
+			},
+		});
+
+		const isAdmin = user?.roles.includes("admin") ?? false;
+
+		return requests.map((req) => {
+			const isOwner =
+				isAdmin ||
+				(user?.sub === req.createdBy &&
+					(user?.roles.includes("requests:create") ?? false));
+			return {
+				...req,
+				signups: req.signups.map((s) =>
+					isOwner
+						? s
+						: {
+								userId: s.userId,
+								userName: null,
+								scoutGroup: null,
+								comment: null,
+							},
+				),
+			};
 		});
 	},
 );
@@ -24,6 +60,8 @@ export const createRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: CreateRequestInput) => input)
 	.handler(async ({ data }) => {
 		const user = await requireUser();
+		if (!user.roles.includes("requests:create"))
+			throw new Response("Forbidden", { status: 403 });
 		return prisma.request.create({
 			data: {
 				title: data.title,
@@ -38,13 +76,121 @@ export const createRequest = createServerFn({ method: "POST" })
 		});
 	});
 
+export const signUpForRequest = createServerFn({ method: "POST" })
+	.inputValidator((input: { requestId: string; comment?: string }) => input)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		return prisma.requestSignup.create({
+			data: {
+				requestId: data.requestId,
+				userId: user.sub,
+				userName: user.name,
+				comment: data.comment ?? null,
+			},
+		});
+	});
+
+export const guestSignUpForRequest = createServerFn({ method: "POST" })
+	.inputValidator(
+		(input: {
+			requestId: string;
+			name: string;
+			scoutGroup: string;
+			comment?: string;
+		}) => input,
+	)
+	.handler(async ({ data }): Promise<{ claimToken: string }> => {
+		const { randomUUID } = await import("node:crypto");
+		const claimToken = randomUUID();
+		await prisma.requestSignup.create({
+			data: {
+				requestId: data.requestId,
+				userId: randomUUID(),
+				userName: data.name,
+				scoutGroup: data.scoutGroup,
+				comment: data.comment ?? null,
+				claimToken,
+			},
+		});
+		return { claimToken };
+	});
+
+export const claimGuestSignups = createServerFn({ method: "POST" })
+	.inputValidator((input: { tokens: string[] }) => input)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		let claimed = 0;
+		for (const token of data.tokens) {
+			const signup = await prisma.requestSignup.findUnique({
+				where: { claimToken: token },
+			});
+			if (!signup) continue;
+			const alreadySignedUp = await prisma.requestSignup.findUnique({
+				where: {
+					requestId_userId: { requestId: signup.requestId, userId: user.sub },
+				},
+			});
+			if (alreadySignedUp) {
+				// Authenticated signup takes precedence — drop the anonymous one
+				await prisma.requestSignup.delete({ where: { id: signup.id } });
+			} else {
+				await prisma.requestSignup.update({
+					where: { id: signup.id },
+					data: { userId: user.sub, userName: user.name, claimToken: null },
+				});
+				claimed++;
+			}
+		}
+		return { claimed };
+	});
+
+export const withdrawGuestFromRequest = createServerFn({ method: "POST" })
+	.inputValidator((input: { claimToken: string }) => input)
+	.handler(async ({ data }) => {
+		return prisma.requestSignup.delete({
+			where: { claimToken: data.claimToken },
+		});
+	});
+
+export const withdrawFromRequest = createServerFn({ method: "POST" })
+	.inputValidator((input: { requestId: string }) => input)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		return prisma.requestSignup.delete({
+			where: {
+				requestId_userId: { requestId: data.requestId, userId: user.sub },
+			},
+		});
+	});
+
+export const kickFromRequest = createServerFn({ method: "POST" })
+	.inputValidator((input: { requestId: string; userId: string }) => input)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const request = await prisma.request.findUnique({
+			where: { id: data.requestId },
+		});
+		if (!request) throw new Response("Not Found", { status: 404 });
+		const isAdmin = user.roles.includes("admin");
+		const isOwner =
+			request.createdBy === user.sub && user.roles.includes("requests:create");
+		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
+		return prisma.requestSignup.delete({
+			where: {
+				requestId_userId: { requestId: data.requestId, userId: data.userId },
+			},
+		});
+	});
+
 export const deleteRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { id: string }) => input)
 	.handler(async ({ data }) => {
 		const user = await requireUser();
 		const request = await prisma.request.findUnique({ where: { id: data.id } });
 		if (!request) throw new Response("Not Found", { status: 404 });
-		if (request.createdBy !== user.sub)
-			throw new Response("Forbidden", { status: 403 });
+		const isAdmin = user.roles.includes("admin");
+		const isOwner =
+			request.createdBy === user.sub && user.roles.includes("requests:create");
+		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
 		return prisma.request.delete({ where: { id: data.id } });
 	});

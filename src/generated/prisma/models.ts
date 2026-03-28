@@ -9,4 +9,5 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Request.ts'
+export type * from './models/RequestSignup.ts'
 export type * from './commonInputTypes.ts'

@@ -22,3 +22,8 @@ export * from './enums.ts';
  * 
  */
 export type Request = Prisma.RequestModel
+/**
+ * Model RequestSignup
+ * 
+ */
+export type RequestSignup = Prisma.RequestSignupModel

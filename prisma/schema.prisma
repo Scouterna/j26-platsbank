@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Request {
-  id           String   @id @default(uuid())
+  id           String          @id @default(uuid())
   title        String
   description  String
   startTime    DateTime
@@ -17,6 +17,21 @@ model Request {
   location     String?
   createdBy    String
   creatorName  String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  signups      RequestSignup[]
+}
+
+model RequestSignup {
+  id         String   @id @default(uuid())
+  requestId  String
+  userId     String
+  userName   String
+  scoutGroup String?
+  comment    String?
+  claimToken String?  @unique
+  createdAt  DateTime @default(now())
+  request    Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, userId])
 }

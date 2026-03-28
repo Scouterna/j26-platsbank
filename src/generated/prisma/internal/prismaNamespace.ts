@@ -384,7 +384,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  Request: 'Request'
+  Request: 'Request',
+  RequestSignup: 'RequestSignup'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +401,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "request"
+    modelProps: "request" | "requestSignup"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -478,6 +479,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RequestSignup: {
+      payload: Prisma.$RequestSignupPayload<ExtArgs>
+      fields: Prisma.RequestSignupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RequestSignupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RequestSignupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        findFirst: {
+          args: Prisma.RequestSignupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RequestSignupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        findMany: {
+          args: Prisma.RequestSignupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>[]
+        }
+        create: {
+          args: Prisma.RequestSignupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        createMany: {
+          args: Prisma.RequestSignupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RequestSignupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>[]
+        }
+        delete: {
+          args: Prisma.RequestSignupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        update: {
+          args: Prisma.RequestSignupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        deleteMany: {
+          args: Prisma.RequestSignupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RequestSignupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RequestSignupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>[]
+        }
+        upsert: {
+          args: Prisma.RequestSignupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestSignupPayload>
+        }
+        aggregate: {
+          args: Prisma.RequestSignupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRequestSignup>
+        }
+        groupBy: {
+          args: Prisma.RequestSignupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequestSignupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RequestSignupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequestSignupCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -532,6 +607,20 @@ export const RequestScalarFieldEnum = {
 } as const
 
 export type RequestScalarFieldEnum = (typeof RequestScalarFieldEnum)[keyof typeof RequestScalarFieldEnum]
+
+
+export const RequestSignupScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  userId: 'userId',
+  userName: 'userName',
+  scoutGroup: 'scoutGroup',
+  comment: 'comment',
+  claimToken: 'claimToken',
+  createdAt: 'createdAt'
+} as const
+
+export type RequestSignupScalarFieldEnum = (typeof RequestSignupScalarFieldEnum)[keyof typeof RequestSignupScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -715,6 +804,7 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   request?: Prisma.RequestOmit
+  requestSignup?: Prisma.RequestSignupOmit
 }
 
 /* Types for Logging */

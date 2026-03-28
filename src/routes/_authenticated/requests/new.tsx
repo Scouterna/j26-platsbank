@@ -1,13 +1,21 @@
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import {
+	DatePicker,
+	LocalizationProvider,
+	TimePicker,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
 import { createRequest } from "#/server/requests";
 
 export const Route = createFileRoute("/_authenticated/requests/new")({
+	beforeLoad: ({ context }) => {
+		if (!context.user?.roles.includes("requests:create"))
+			throw redirect({ to: "/unauthorized" });
+	},
 	component: NewRequestPage,
 });
 
@@ -29,8 +37,14 @@ function NewRequestPage() {
 		setSubmitting(true);
 		setError(null);
 		try {
-			const startDateTime = date.hour(startTime.hour()).minute(startTime.minute()).second(0);
-			const endDateTime = date.hour(endTime.hour()).minute(endTime.minute()).second(0);
+			const startDateTime = date
+				.hour(startTime.hour())
+				.minute(startTime.minute())
+				.second(0);
+			const endDateTime = date
+				.hour(endTime.hour())
+				.minute(endTime.minute())
+				.second(0);
 			await createRequest({
 				data: {
 					title,
@@ -101,7 +115,10 @@ function NewRequestPage() {
 							onChange={(e) => setPeopleNeeded(Number(e.target.value))}
 							required
 							fullWidth
-							slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }}
+							slotProps={{
+								htmlInput: { min: 1 },
+								inputLabel: { shrink: true },
+							}}
 						/>
 						<TextField
 							label="Plats (valfritt)"

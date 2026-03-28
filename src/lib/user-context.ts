@@ -5,6 +5,11 @@ export const UserContext = createContext<AppUser | null>(null);
 
 export function useUser(): AppUser {
 	const user = useContext(UserContext);
-	if (!user) throw new Error("useUser must be used inside the authenticated layout");
+	if (!user)
+		throw new Error("useUser must be used inside the authenticated layout");
 	return user;
+}
+
+export function useOptionalUser(): AppUser | null {
+	return useContext(UserContext);
 }

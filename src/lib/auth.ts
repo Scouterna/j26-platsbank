@@ -1,4 +1,4 @@
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import { createRemoteJWKSet, type JWTPayload, jwtVerify } from "jose";
 
 const ISSUER = "https://dev.id.scouterna.se/realms/jamboree26";
 
@@ -24,6 +24,7 @@ export interface AppUser {
 	email: string;
 	preferredUsername: string;
 	picture?: string;
+	roles: string[];
 }
 
 export async function verifyAndGetUser(token: string): Promise<AppUser | null> {
@@ -32,17 +33,13 @@ export async function verifyAndGetUser(token: string): Promise<AppUser | null> {
 			issuer: ISSUER,
 		});
 
-		const roles = payload.resource_access?.["j26-platsbank"]?.roles ?? [];
-		if (!roles.includes("basic:read")) {
-			return null;
-		}
-
 		return {
 			sub: payload.sub!,
 			name: payload.name ?? "Okänd",
 			email: payload.email ?? "",
 			preferredUsername: payload.preferred_username ?? "",
 			picture: payload.picture,
+			roles: payload.resource_access?.["j26-platsbank"]?.roles ?? [],
 		};
 	} catch (err) {
 		console.error("[auth] verifyAndGetUser failed:", err);

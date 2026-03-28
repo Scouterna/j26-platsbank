@@ -11,6 +11,16 @@ export const getUser = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+/** Returns the user, distinguishing "no token" (anonymous) from "bad token" (unauthorized). */
+export const getUserStatus = createServerFn({ method: "GET" }).handler(
+	async (): Promise<{ user: AppUser | null; tokenPresent: boolean }> => {
+		const token = getCookie("j26-auth_access-token");
+		if (!token) return { user: null, tokenPresent: false };
+		const user = await verifyAndGetUser(token);
+		return { user, tokenPresent: true };
+	},
+);
+
 export async function requireUser(): Promise<AppUser> {
 	const token = getCookie("j26-auth_access-token");
 	if (!token) throw new Response("Unauthorized", { status: 401 });

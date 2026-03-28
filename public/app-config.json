@@ -1,0 +1,11 @@
+{
+	"navigation": [
+		{
+			"type": "page",
+			"id": "page_platsbank",
+			"label": "Platsbank",
+			"icon": "hammer",
+			"path": "/_services/platsbank"
+		}
+	]
+}
