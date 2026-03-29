@@ -180,6 +180,13 @@ export const claimGuestSignups = createServerFn({ method: "POST" })
 				where: { claimToken: token },
 			});
 			if (!signup) continue;
+			const block = await prisma.requestBlock.findUnique({
+				where: { requestId_userId: { requestId: signup.requestId, userId: user.sub } },
+			});
+			if (block) {
+				await prisma.requestSignup.delete({ where: { id: signup.id } });
+				continue;
+			}
 			const alreadySignedUp = await prisma.requestSignup.findUnique({
 				where: {
 					requestId_userId: { requestId: signup.requestId, userId: user.sub },
