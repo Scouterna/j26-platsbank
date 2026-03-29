@@ -426,9 +426,7 @@ function RequestsPage() {
 																	</Typography>
 																	<Chip
 																		icon={<PeopleIcon />}
-																		label={
-																			"${req.signups.length}/${req.peopleNeeded}"
-																		}
+																		label={`${req.signups.length}/${req.peopleNeeded}`}
 																		size="small"
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
@@ -465,7 +463,9 @@ function RequestsPage() {
 																		<Button
 																			size="small"
 																			variant="outlined"
-																			disabled
+																			onClick={() =>
+																				setSelectedRequestId(req.id)
+																			}
 																		>
 																			Borttagen
 																		</Button>
