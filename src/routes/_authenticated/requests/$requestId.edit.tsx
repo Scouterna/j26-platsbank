@@ -106,7 +106,7 @@ function EditForm({
 					location: location || undefined,
 				},
 			});
-			navigate({ to: "/requests" });
+			navigate({ to: "/" });
 		} catch {
 			setError("Något gick fel. Försök igen.");
 			setSubmitting(false);
@@ -185,7 +185,7 @@ function EditForm({
 							</Button>
 							<Button
 								variant="outlined"
-								onClick={() => navigate({ to: "/requests" })}
+								onClick={() => navigate({ to: "/" })}
 								disabled={submitting}
 							>
 								Avbryt

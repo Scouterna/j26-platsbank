@@ -12,8 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authenticated/requests/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedRequestsNewRouteImport } from './routes/_authenticated/requests/new'
 import { Route as AuthenticatedRequestsRequestIdEditRouteImport } from './routes/_authenticated/requests/$requestId.edit'
 
@@ -31,17 +30,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedRequestsIndexRoute =
-  AuthenticatedRequestsIndexRouteImport.update({
-    id: '/requests/',
-    path: '/requests/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedRequestsNewRoute =
   AuthenticatedRequestsNewRouteImport.update({
     id: '/requests/new',
@@ -56,29 +49,26 @@ const AuthenticatedRequestsRequestIdEditRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/about': typeof AboutRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
-  '/requests/': typeof AuthenticatedRequestsIndexRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/': typeof AuthenticatedIndexRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
-  '/requests': typeof AuthenticatedRequestsIndexRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/requests/new': typeof AuthenticatedRequestsNewRoute
-  '/_authenticated/requests/': typeof AuthenticatedRequestsIndexRoute
   '/_authenticated/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRouteTypes {
@@ -88,29 +78,25 @@ export interface FileRouteTypes {
     | '/about'
     | '/unauthorized'
     | '/requests/new'
-    | '/requests/'
     | '/requests/$requestId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/about'
     | '/unauthorized'
+    | '/'
     | '/requests/new'
-    | '/requests'
     | '/requests/$requestId/edit'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
     | '/about'
     | '/unauthorized'
+    | '/_authenticated/'
     | '/_authenticated/requests/new'
-    | '/_authenticated/requests/'
     | '/_authenticated/requests/$requestId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
@@ -139,18 +125,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/requests/': {
-      id: '/_authenticated/requests/'
-      path: '/requests'
-      fullPath: '/requests/'
-      preLoaderRoute: typeof AuthenticatedRequestsIndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/requests/new': {
@@ -171,14 +150,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedRequestsNewRoute: typeof AuthenticatedRequestsNewRoute
-  AuthenticatedRequestsIndexRoute: typeof AuthenticatedRequestsIndexRoute
   AuthenticatedRequestsRequestIdEditRoute: typeof AuthenticatedRequestsRequestIdEditRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedRequestsNewRoute: AuthenticatedRequestsNewRoute,
-  AuthenticatedRequestsIndexRoute: AuthenticatedRequestsIndexRoute,
   AuthenticatedRequestsRequestIdEditRoute:
     AuthenticatedRequestsRequestIdEditRoute,
 }
@@ -188,7 +167,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   UnauthorizedRoute: UnauthorizedRoute,

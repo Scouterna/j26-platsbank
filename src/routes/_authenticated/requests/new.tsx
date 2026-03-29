@@ -57,7 +57,7 @@ function NewRequestPage() {
 					location: location || undefined,
 				},
 			});
-			navigate({ to: "/requests" });
+			navigate({ to: "/" });
 		} catch {
 			setError("Något gick fel. Försök igen.");
 			setSubmitting(false);
@@ -67,7 +67,7 @@ function NewRequestPage() {
 	return (
 		<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="sv">
 			<Box maxWidth={600}>
-					<form onSubmit={handleSubmit}>
+				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
 						<TextField
 							label="Titel"
@@ -136,7 +136,7 @@ function NewRequestPage() {
 							</Button>
 							<Button
 								variant="outlined"
-								onClick={() => navigate({ to: "/requests" })}
+								onClick={() => navigate({ to: "/" })}
 								disabled={submitting}
 							>
 								Avbryt

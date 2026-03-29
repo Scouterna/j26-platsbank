@@ -1,6 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -8,6 +7,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import UndoIcon from "@mui/icons-material/Undo";
 import {
 	Alert,
@@ -33,7 +33,12 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
-import { createFileRoute, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	useRouter,
+	useRouterState,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
@@ -68,7 +73,7 @@ function saveStoredSignups(signups: GuestSignup[]) {
 	localStorage.setItem(CLAIM_TOKENS_KEY, JSON.stringify(signups));
 }
 
-export const Route = createFileRoute("/_authenticated/requests/")({
+export const Route = createFileRoute("/_authenticated/")({
 	loader: () => getRequests(),
 	component: RequestsPage,
 });
@@ -128,7 +133,9 @@ function RequestsPage() {
 	const requests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
-	const isRouterLoading = useRouterState({ select: (s) => s.status !== "idle" });
+	const isRouterLoading = useRouterState({
+		select: (s) => s.status !== "idle",
+	});
 
 	const canCreate = user?.roles.includes("requests:create") ?? false;
 	const isAdmin = user?.roles.includes("admin") ?? false;
@@ -184,7 +191,9 @@ function RequestsPage() {
 				? requests.filter((r) => guestSignups.some((g) => g.requestId === r.id))
 				: canCreate && user
 					? requests.filter((r) =>
-							tab === "mine" ? r.createdBy === user.sub : r.createdBy !== user.sub,
+							tab === "mine"
+								? r.createdBy === user.sub
+								: r.createdBy !== user.sub,
 						)
 					: requests;
 	const chronological = [...filtered].sort(
@@ -284,9 +293,18 @@ function RequestsPage() {
 				flexDirection={{ xs: "column", sm: "row" }}
 				mb={3}
 			>
-				<Box display="flex" gap={1} alignItems="center" order={{ xs: 0, sm: 1 }} alignSelf={{ xs: "flex-end", sm: "auto" }} mt={{ xs: 1, sm: 0 }}>
+				<Box
+					display="flex"
+					gap={1}
+					alignItems="center"
+					order={{ xs: 0, sm: 1 }}
+					alignSelf={{ xs: "flex-end", sm: "auto" }}
+				>
 					<Tooltip title="Uppdatera">
-						<IconButton onClick={() => router.invalidate()} disabled={isRouterLoading}>
+						<IconButton
+							onClick={() => router.invalidate()}
+							disabled={isRouterLoading}
+						>
 							<RefreshIcon />
 						</IconButton>
 					</Tooltip>
@@ -301,8 +319,16 @@ function RequestsPage() {
 						</Button>
 					)}
 				</Box>
-				<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ order: { xs: 1, sm: 0 } }}>
-					{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
+				<Tabs
+					value={tab}
+					onChange={(_, v) => setTab(v)}
+					sx={{ order: { xs: 1, sm: 0 } }}
+				>
+					{canCreate ? (
+						<Tab label="Andras" value="others" />
+					) : (
+						<Tab label="Alla" value="others" />
+					)}
 					{canCreate && <Tab label="Mina" value="mine" />}
 					<Tab label="Anmälda" value="signed-up" />
 				</Tabs>
@@ -400,7 +426,9 @@ function RequestsPage() {
 																	</Typography>
 																	<Chip
 																		icon={<PeopleIcon />}
-																		label={`${req.signups.length}/${req.peopleNeeded}`}
+																		label={
+																			"${req.signups.length}/${req.peopleNeeded}"
+																		}
 																		size="small"
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
@@ -647,9 +675,7 @@ function RequestsPage() {
 															<IconButton
 																size="small"
 																color="primary"
-																onClick={() =>
-																	handleUnblock(req.id, b.userId)
-																}
+																onClick={() => handleUnblock(req.id, b.userId)}
 															>
 																<UndoIcon fontSize="small" />
 															</IconButton>
