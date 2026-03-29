@@ -9,6 +9,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
+import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { createRequest } from "#/server/requests";
 
 export const Route = createFileRoute("/_authenticated/requests/new")({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/requests/new")({
 });
 
 function NewRequestPage() {
+	useAppBarTitle("Ny förfrågan");
 	const navigate = useNavigate();
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -65,10 +67,7 @@ function NewRequestPage() {
 	return (
 		<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="sv">
 			<Box maxWidth={600}>
-				<Typography variant="h4" component="h1" mb={3}>
-					Ny förfrågan
-				</Typography>
-				<form onSubmit={handleSubmit}>
+					<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
 						<TextField
 							label="Titel"

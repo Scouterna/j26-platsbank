@@ -9,6 +9,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
+import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useUser } from "#/lib/user-context";
 import { getRequest, updateRequest } from "#/server/requests";
 
@@ -68,6 +69,7 @@ function EditForm({
 	requestId,
 	initial,
 }: { requestId: string; initial: FormValues }) {
+	useAppBarTitle("Redigera förfrågan");
 	const navigate = useNavigate();
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
@@ -114,9 +116,6 @@ function EditForm({
 	return (
 		<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="sv">
 			<Box maxWidth={600}>
-				<Typography variant="h4" component="h1" mb={3}>
-					Redigera förfrågan
-				</Typography>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
 						<TextField

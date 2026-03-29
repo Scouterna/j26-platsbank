@@ -35,6 +35,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import {
 	claimGuestSignups,
@@ -131,6 +132,8 @@ function RequestsPage() {
 
 	const canCreate = user?.roles.includes("requests:create") ?? false;
 	const isAdmin = user?.roles.includes("admin") ?? false;
+
+	useAppBarTitle("Förfrågningar");
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on user identity only
 	useEffect(() => {
@@ -282,9 +285,6 @@ function RequestsPage() {
 				gap={2}
 				mb={3}
 			>
-				<Typography variant="h4" component="h1">
-					Förfrågningar
-				</Typography>
 				<Box display="flex" gap={1} alignItems="center">
 					<Tooltip title="Uppdatera">
 						<IconButton onClick={() => router.invalidate()} disabled={isRouterLoading}>
