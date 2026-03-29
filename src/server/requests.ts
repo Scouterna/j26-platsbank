@@ -3,9 +3,10 @@ import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "#/db";
 import { verifyAndGetUser } from "#/lib/auth";
 import { requireUser } from "#/server/auth";
+import { withLogging } from "#/server/utils";
 
 export const getRequests = createServerFn({ method: "GET" }).handler(
-	async () => {
+	() => withLogging("getRequests", async () => {
 		const token = getCookie("j26-auth_access-token");
 		const user = token ? await verifyAndGetUser(token) : null;
 
@@ -55,14 +56,14 @@ export const getRequests = createServerFn({ method: "GET" }).handler(
 					: null,
 			};
 		});
-	},
+	}),
 );
 
 export const getRequest = createServerFn({ method: "GET" })
 	.inputValidator((input: { id: string }) => input)
-	.handler(async ({ data }) => {
-		return prisma.request.findUnique({ where: { id: data.id } });
-	});
+	.handler(({ data }) => withLogging("getRequest", () =>
+		prisma.request.findUnique({ where: { id: data.id } }),
+	));
 
 interface CreateRequestInput {
 	title: string;
@@ -75,7 +76,7 @@ interface CreateRequestInput {
 
 export const createRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: CreateRequestInput) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("createRequest", async () => {
 		const user = await requireUser();
 		if (!user.roles.includes("requests:create"))
 			throw new Response("Forbidden", { status: 403 });
@@ -91,7 +92,7 @@ export const createRequest = createServerFn({ method: "POST" })
 				creatorName: user.name,
 			},
 		});
-	});
+	}));
 
 interface UpdateRequestInput {
 	id: string;
@@ -105,7 +106,7 @@ interface UpdateRequestInput {
 
 export const updateRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: UpdateRequestInput) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("updateRequest", async () => {
 		const user = await requireUser();
 		const request = await prisma.request.findUnique({ where: { id: data.id } });
 		if (!request) throw new Response("Not Found", { status: 404 });
@@ -124,11 +125,11 @@ export const updateRequest = createServerFn({ method: "POST" })
 				location: data.location ?? null,
 			},
 		});
-	});
+	}));
 
 export const signUpForRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string; comment?: string }) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("signUpForRequest", async () => {
 		const user = await requireUser();
 		const block = await prisma.requestBlock.findUnique({
 			where: { requestId_userId: { requestId: data.requestId, userId: user.sub } },
@@ -142,7 +143,7 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 				comment: data.comment ?? null,
 			},
 		});
-	});
+	}));
 
 export const guestSignUpForRequest = createServerFn({ method: "POST" })
 	.inputValidator(
@@ -153,7 +154,7 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 			comment?: string;
 		}) => input,
 	)
-	.handler(async ({ data }): Promise<{ claimToken: string }> => {
+	.handler(({ data }): Promise<{ claimToken: string }> => withLogging("guestSignUpForRequest", async () => {
 		const { randomUUID } = await import("node:crypto");
 		const claimToken = randomUUID();
 		await prisma.requestSignup.create({
@@ -167,11 +168,11 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 			},
 		});
 		return { claimToken };
-	});
+	}));
 
 export const claimGuestSignups = createServerFn({ method: "POST" })
 	.inputValidator((input: { tokens: string[] }) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("claimGuestSignups", async () => {
 		const user = await requireUser();
 		let claimed = 0;
 		for (const token of data.tokens) {
@@ -196,32 +197,32 @@ export const claimGuestSignups = createServerFn({ method: "POST" })
 			}
 		}
 		return { claimed };
-	});
+	}));
 
 export const withdrawGuestFromRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { claimToken: string }) => input)
-	.handler(async ({ data }) => {
-		return prisma.requestSignup.delete({
+	.handler(({ data }) => withLogging("withdrawGuestFromRequest", () =>
+		prisma.requestSignup.delete({
 			where: { claimToken: data.claimToken },
-		});
-	});
+		}),
+	));
 
 export const withdrawFromRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string }) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("withdrawFromRequest", async () => {
 		const user = await requireUser();
 		return prisma.requestSignup.delete({
 			where: {
 				requestId_userId: { requestId: data.requestId, userId: user.sub },
 			},
 		});
-	});
+	}));
 
 export const kickFromRequest = createServerFn({ method: "POST" })
 	.inputValidator(
 		(input: { requestId: string; userId: string; reason: string }) => input,
 	)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("kickFromRequest", async () => {
 		const user = await requireUser();
 		const request = await prisma.request.findUnique({
 			where: { id: data.requestId },
@@ -248,11 +249,11 @@ export const kickFromRequest = createServerFn({ method: "POST" })
 				},
 			}),
 		]);
-	});
+	}));
 
 export const unblockFromRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string; userId: string }) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("unblockFromRequest", async () => {
 		const user = await requireUser();
 		const request = await prisma.request.findUnique({
 			where: { id: data.requestId },
@@ -265,11 +266,11 @@ export const unblockFromRequest = createServerFn({ method: "POST" })
 		return prisma.requestBlock.delete({
 			where: { requestId_userId: { requestId: data.requestId, userId: data.userId } },
 		});
-	});
+	}));
 
 export const deleteRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { id: string }) => input)
-	.handler(async ({ data }) => {
+	.handler(({ data }) => withLogging("deleteRequest", async () => {
 		const user = await requireUser();
 		const request = await prisma.request.findUnique({ where: { id: data.id } });
 		if (!request) throw new Response("Not Found", { status: 404 });
@@ -278,4 +279,4 @@ export const deleteRequest = createServerFn({ method: "POST" })
 			request.createdBy === user.sub && user.roles.includes("requests:create");
 		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
 		return prisma.request.delete({ where: { id: data.id } });
-	});
+	}));
