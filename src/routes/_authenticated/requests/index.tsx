@@ -177,11 +177,13 @@ function RequestsPage() {
 	const filtered =
 		tab === "signed-up" && user
 			? requests.filter((r) => r.signups.some((s) => s.userId === user.sub))
-			: canCreate && user
-				? requests.filter((r) =>
-						tab === "mine" ? r.createdBy === user.sub : r.createdBy !== user.sub,
-					)
-				: requests;
+			: tab === "signed-up" && !user
+				? requests.filter((r) => guestSignups.some((g) => g.requestId === r.id))
+				: canCreate && user
+					? requests.filter((r) =>
+							tab === "mine" ? r.createdBy === user.sub : r.createdBy !== user.sub,
+						)
+					: requests;
 	const chronological = [...filtered].sort(
 		(a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
 	);
@@ -302,13 +304,11 @@ function RequestsPage() {
 				</Box>
 			</Box>
 
-			{user && (
-				<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-					{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
-					{canCreate && <Tab label="Mina" value="mine" />}
-					<Tab label="Anmälda" value="signed-up" />
-				</Tabs>
-			)}
+			<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
+				{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
+				{canCreate && <Tab label="Mina" value="mine" />}
+				<Tab label="Anmälda" value="signed-up" />
+			</Tabs>
 
 			{filtered.length === 0 ? (
 				<Typography color="text.secondary">
