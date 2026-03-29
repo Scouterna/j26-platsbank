@@ -25,11 +25,10 @@ function Unauthorized() {
 			gap={2}
 		>
 			<Typography variant="h4" component="h1">
-				Åtkomst nekad
+				Inloggningen misslyckades
 			</Typography>
 			<Typography variant="body1" color="text.secondary">
-				Du har inte behörighet att använda J26 Platsbank. Kontakta en
-				administratör om du tror att detta är fel.
+				Vi kunde inte verifiera din inloggning. Försök logga in igen.
 			</Typography>
 		</Box>
 	);

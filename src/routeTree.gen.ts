@@ -9,18 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedRequestsNewRouteImport } from './routes/_authenticated/requests/new'
 import { Route as AuthenticatedRequestsRequestIdEditRouteImport } from './routes/_authenticated/requests/$requestId.edit'
 
-const UnauthorizedRoute = UnauthorizedRouteImport.update({
-  id: '/unauthorized',
-  path: '/unauthorized',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -51,13 +45,11 @@ const AuthenticatedRequestsRequestIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/about': typeof AboutRoute
-  '/unauthorized': typeof UnauthorizedRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
-  '/unauthorized': typeof UnauthorizedRoute
   '/': typeof AuthenticatedIndexRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
@@ -66,31 +58,19 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
-  '/unauthorized': typeof UnauthorizedRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/requests/new': typeof AuthenticatedRequestsNewRoute
   '/_authenticated/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/about'
-    | '/unauthorized'
-    | '/requests/new'
-    | '/requests/$requestId/edit'
+  fullPaths: '/' | '/about' | '/requests/new' | '/requests/$requestId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/about'
-    | '/unauthorized'
-    | '/'
-    | '/requests/new'
-    | '/requests/$requestId/edit'
+  to: '/about' | '/' | '/requests/new' | '/requests/$requestId/edit'
   id:
     | '__root__'
     | '/_authenticated'
     | '/about'
-    | '/unauthorized'
     | '/_authenticated/'
     | '/_authenticated/requests/new'
     | '/_authenticated/requests/$requestId/edit'
@@ -99,18 +79,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
-  UnauthorizedRoute: typeof UnauthorizedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unauthorized': {
-      id: '/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof UnauthorizedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -169,7 +141,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
-  UnauthorizedRoute: UnauthorizedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -5,7 +5,7 @@ import {
 	TimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
@@ -18,7 +18,7 @@ export const Route = createFileRoute(
 )({
 	beforeLoad: ({ context }) => {
 		if (!context.user?.roles.includes("requests:create"))
-			throw redirect({ to: "/unauthorized" });
+			throw new Error("unauthorized");
 	},
 	loader: ({ params }) => getRequest({ data: { id: params.requestId } }),
 	component: EditRequestPage,
