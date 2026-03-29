@@ -265,6 +265,7 @@ export type RequestWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   signups?: Prisma.RequestSignupListRelationFilter
+  blocks?: Prisma.RequestBlockListRelationFilter
 }
 
 export type RequestOrderByWithRelationInput = {
@@ -280,6 +281,7 @@ export type RequestOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   signups?: Prisma.RequestSignupOrderByRelationAggregateInput
+  blocks?: Prisma.RequestBlockOrderByRelationAggregateInput
 }
 
 export type RequestWhereUniqueInput = Prisma.AtLeast<{
@@ -298,6 +300,7 @@ export type RequestWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   signups?: Prisma.RequestSignupListRelationFilter
+  blocks?: Prisma.RequestBlockListRelationFilter
 }, "id">
 
 export type RequestOrderByWithAggregationInput = {
@@ -349,6 +352,7 @@ export type RequestCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupCreateNestedManyWithoutRequestInput
+  blocks?: Prisma.RequestBlockCreateNestedManyWithoutRequestInput
 }
 
 export type RequestUncheckedCreateInput = {
@@ -364,6 +368,7 @@ export type RequestUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupUncheckedCreateNestedManyWithoutRequestInput
+  blocks?: Prisma.RequestBlockUncheckedCreateNestedManyWithoutRequestInput
 }
 
 export type RequestUpdateInput = {
@@ -379,6 +384,7 @@ export type RequestUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUpdateManyWithoutRequestNestedInput
+  blocks?: Prisma.RequestBlockUpdateManyWithoutRequestNestedInput
 }
 
 export type RequestUncheckedUpdateInput = {
@@ -394,6 +400,7 @@ export type RequestUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUncheckedUpdateManyWithoutRequestNestedInput
+  blocks?: Prisma.RequestBlockUncheckedUpdateManyWithoutRequestNestedInput
 }
 
 export type RequestCreateManyInput = {
@@ -513,6 +520,20 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type RequestCreateNestedOneWithoutBlocksInput = {
+  create?: Prisma.XOR<Prisma.RequestCreateWithoutBlocksInput, Prisma.RequestUncheckedCreateWithoutBlocksInput>
+  connectOrCreate?: Prisma.RequestCreateOrConnectWithoutBlocksInput
+  connect?: Prisma.RequestWhereUniqueInput
+}
+
+export type RequestUpdateOneRequiredWithoutBlocksNestedInput = {
+  create?: Prisma.XOR<Prisma.RequestCreateWithoutBlocksInput, Prisma.RequestUncheckedCreateWithoutBlocksInput>
+  connectOrCreate?: Prisma.RequestCreateOrConnectWithoutBlocksInput
+  upsert?: Prisma.RequestUpsertWithoutBlocksInput
+  connect?: Prisma.RequestWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RequestUpdateToOneWithWhereWithoutBlocksInput, Prisma.RequestUpdateWithoutBlocksInput>, Prisma.RequestUncheckedUpdateWithoutBlocksInput>
+}
+
 export type RequestCreateNestedOneWithoutSignupsInput = {
   create?: Prisma.XOR<Prisma.RequestCreateWithoutSignupsInput, Prisma.RequestUncheckedCreateWithoutSignupsInput>
   connectOrCreate?: Prisma.RequestCreateOrConnectWithoutSignupsInput
@@ -527,6 +548,82 @@ export type RequestUpdateOneRequiredWithoutSignupsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.RequestUpdateToOneWithWhereWithoutSignupsInput, Prisma.RequestUpdateWithoutSignupsInput>, Prisma.RequestUncheckedUpdateWithoutSignupsInput>
 }
 
+export type RequestCreateWithoutBlocksInput = {
+  id?: string
+  title: string
+  description: string
+  startTime: Date | string
+  endTime: Date | string
+  peopleNeeded: number
+  location?: string | null
+  createdBy: string
+  creatorName: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  signups?: Prisma.RequestSignupCreateNestedManyWithoutRequestInput
+}
+
+export type RequestUncheckedCreateWithoutBlocksInput = {
+  id?: string
+  title: string
+  description: string
+  startTime: Date | string
+  endTime: Date | string
+  peopleNeeded: number
+  location?: string | null
+  createdBy: string
+  creatorName: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  signups?: Prisma.RequestSignupUncheckedCreateNestedManyWithoutRequestInput
+}
+
+export type RequestCreateOrConnectWithoutBlocksInput = {
+  where: Prisma.RequestWhereUniqueInput
+  create: Prisma.XOR<Prisma.RequestCreateWithoutBlocksInput, Prisma.RequestUncheckedCreateWithoutBlocksInput>
+}
+
+export type RequestUpsertWithoutBlocksInput = {
+  update: Prisma.XOR<Prisma.RequestUpdateWithoutBlocksInput, Prisma.RequestUncheckedUpdateWithoutBlocksInput>
+  create: Prisma.XOR<Prisma.RequestCreateWithoutBlocksInput, Prisma.RequestUncheckedCreateWithoutBlocksInput>
+  where?: Prisma.RequestWhereInput
+}
+
+export type RequestUpdateToOneWithWhereWithoutBlocksInput = {
+  where?: Prisma.RequestWhereInput
+  data: Prisma.XOR<Prisma.RequestUpdateWithoutBlocksInput, Prisma.RequestUncheckedUpdateWithoutBlocksInput>
+}
+
+export type RequestUpdateWithoutBlocksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  signups?: Prisma.RequestSignupUpdateManyWithoutRequestNestedInput
+}
+
+export type RequestUncheckedUpdateWithoutBlocksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  signups?: Prisma.RequestSignupUncheckedUpdateManyWithoutRequestNestedInput
+}
+
 export type RequestCreateWithoutSignupsInput = {
   id?: string
   title: string
@@ -539,6 +636,7 @@ export type RequestCreateWithoutSignupsInput = {
   creatorName: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  blocks?: Prisma.RequestBlockCreateNestedManyWithoutRequestInput
 }
 
 export type RequestUncheckedCreateWithoutSignupsInput = {
@@ -553,6 +651,7 @@ export type RequestUncheckedCreateWithoutSignupsInput = {
   creatorName: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  blocks?: Prisma.RequestBlockUncheckedCreateNestedManyWithoutRequestInput
 }
 
 export type RequestCreateOrConnectWithoutSignupsInput = {
@@ -583,6 +682,7 @@ export type RequestUpdateWithoutSignupsInput = {
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blocks?: Prisma.RequestBlockUpdateManyWithoutRequestNestedInput
 }
 
 export type RequestUncheckedUpdateWithoutSignupsInput = {
@@ -597,6 +697,7 @@ export type RequestUncheckedUpdateWithoutSignupsInput = {
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blocks?: Prisma.RequestBlockUncheckedUpdateManyWithoutRequestNestedInput
 }
 
 
@@ -606,10 +707,12 @@ export type RequestUncheckedUpdateWithoutSignupsInput = {
 
 export type RequestCountOutputType = {
   signups: number
+  blocks: number
 }
 
 export type RequestCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   signups?: boolean | RequestCountOutputTypeCountSignupsArgs
+  blocks?: boolean | RequestCountOutputTypeCountBlocksArgs
 }
 
 /**
@@ -629,6 +732,13 @@ export type RequestCountOutputTypeCountSignupsArgs<ExtArgs extends runtime.Types
   where?: Prisma.RequestSignupWhereInput
 }
 
+/**
+ * RequestCountOutputType without action
+ */
+export type RequestCountOutputTypeCountBlocksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RequestBlockWhereInput
+}
+
 
 export type RequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -643,6 +753,7 @@ export type RequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   signups?: boolean | Prisma.Request$signupsArgs<ExtArgs>
+  blocks?: boolean | Prisma.Request$blocksArgs<ExtArgs>
   _count?: boolean | Prisma.RequestCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["request"]>
 
@@ -691,6 +802,7 @@ export type RequestSelectScalar = {
 export type RequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "startTime" | "endTime" | "peopleNeeded" | "location" | "createdBy" | "creatorName" | "createdAt" | "updatedAt", ExtArgs["result"]["request"]>
 export type RequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   signups?: boolean | Prisma.Request$signupsArgs<ExtArgs>
+  blocks?: boolean | Prisma.Request$blocksArgs<ExtArgs>
   _count?: boolean | Prisma.RequestCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RequestIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -700,6 +812,7 @@ export type $RequestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Request"
   objects: {
     signups: Prisma.$RequestSignupPayload<ExtArgs>[]
+    blocks: Prisma.$RequestBlockPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1108,6 +1221,7 @@ readonly fields: RequestFieldRefs;
 export interface Prisma__RequestClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   signups<T extends Prisma.Request$signupsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Request$signupsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequestSignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  blocks<T extends Prisma.Request$blocksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Request$blocksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequestBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1562,6 +1676,30 @@ export type Request$signupsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.RequestSignupScalarFieldEnum | Prisma.RequestSignupScalarFieldEnum[]
+}
+
+/**
+ * Request.blocks
+ */
+export type Request$blocksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RequestBlock
+   */
+  select?: Prisma.RequestBlockSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RequestBlock
+   */
+  omit?: Prisma.RequestBlockOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RequestBlockInclude<ExtArgs> | null
+  where?: Prisma.RequestBlockWhereInput
+  orderBy?: Prisma.RequestBlockOrderByWithRelationInput | Prisma.RequestBlockOrderByWithRelationInput[]
+  cursor?: Prisma.RequestBlockWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RequestBlockScalarFieldEnum | Prisma.RequestBlockScalarFieldEnum[]
 }
 
 /**

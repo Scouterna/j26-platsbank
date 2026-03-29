@@ -26,7 +26,7 @@ function NewRequestPage() {
 	const [date, setDate] = useState<Dayjs | null>(null);
 	const [startTime, setStartTime] = useState<Dayjs | null>(null);
 	const [endTime, setEndTime] = useState<Dayjs | null>(null);
-	const [peopleNeeded, setPeopleNeeded] = useState(1);
+	const [peopleNeeded, setPeopleNeeded] = useState("1");
 	const [location, setLocation] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ function NewRequestPage() {
 					description,
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
-					peopleNeeded,
+					peopleNeeded: Number(peopleNeeded),
 					location: location || undefined,
 				},
 			});
@@ -112,7 +112,7 @@ function NewRequestPage() {
 							label="Antal behövda"
 							type="number"
 							value={peopleNeeded}
-							onChange={(e) => setPeopleNeeded(Number(e.target.value))}
+							onChange={(e) => setPeopleNeeded(e.target.value)}
 							required
 							fullWidth
 							slotProps={{

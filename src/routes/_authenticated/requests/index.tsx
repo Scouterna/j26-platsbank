@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -7,7 +8,9 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
+import UndoIcon from "@mui/icons-material/Undo";
 import {
+	Alert,
 	Box,
 	Button,
 	Card,
@@ -40,6 +43,7 @@ import {
 	guestSignUpForRequest,
 	kickFromRequest,
 	signUpForRequest,
+	unblockFromRequest,
 	withdrawFromRequest,
 	withdrawGuestFromRequest,
 } from "#/server/requests";
@@ -141,7 +145,12 @@ function RequestsPage() {
 		});
 	}, [user?.sub]);
 
-	const [tab, setTab] = useState<"others" | "mine">("others");
+	useEffect(() => {
+		const id = setInterval(() => router.invalidate(), 30_000);
+		return () => clearInterval(id);
+	}, [router]);
+
+	const [tab, setTab] = useState<"others" | "mine" | "signed-up">("others");
 	const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 	const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
 		null,
@@ -166,11 +175,13 @@ function RequestsPage() {
 		requests.find((r) => r.id === selectedRequestId) ?? null;
 
 	const filtered =
-		canCreate && user
-			? requests.filter((r) =>
-					tab === "mine" ? r.createdBy === user.sub : r.createdBy !== user.sub,
-				)
-			: requests;
+		tab === "signed-up" && user
+			? requests.filter((r) => r.signups.some((s) => s.userId === user.sub))
+			: canCreate && user
+				? requests.filter((r) =>
+						tab === "mine" ? r.createdBy === user.sub : r.createdBy !== user.sub,
+					)
+				: requests;
 	const chronological = [...filtered].sort(
 		(a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
 	);
@@ -243,10 +254,19 @@ function RequestsPage() {
 	async function handleKickConfirm() {
 		if (!kickTarget) return;
 		await kickFromRequest({
-			data: { requestId: kickTarget.requestId, userId: kickTarget.userId },
+			data: {
+				requestId: kickTarget.requestId,
+				userId: kickTarget.userId,
+				reason: kickReason,
+			},
 		});
 		setKickTarget(null);
 		setKickReason("");
+		router.invalidate();
+	}
+
+	async function handleUnblock(requestId: string, userId: string) {
+		await unblockFromRequest({ data: { requestId, userId } });
 		router.invalidate();
 	}
 
@@ -263,22 +283,30 @@ function RequestsPage() {
 				<Typography variant="h4" component="h1">
 					Förfrågningar
 				</Typography>
-				{canCreate && (
-					<Button
-						variant="contained"
-						startIcon={<AddIcon />}
-						component={Link as any}
-						to="/requests/new"
-					>
-						Ny förfrågan
-					</Button>
-				)}
+				<Box display="flex" gap={1} alignItems="center">
+					<Tooltip title="Uppdatera">
+						<IconButton onClick={() => router.invalidate()} disabled={isRouterLoading}>
+							<RefreshIcon />
+						</IconButton>
+					</Tooltip>
+					{canCreate && (
+						<Button
+							variant="contained"
+							startIcon={<AddIcon />}
+							component={Link as any}
+							to="/requests/new"
+						>
+							Ny förfrågan
+						</Button>
+					)}
+				</Box>
 			</Box>
 
-			{canCreate && (
+			{user && (
 				<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-					<Tab label="Andras" value="others" />
-					<Tab label="Mina" value="mine" />
+					{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
+					{canCreate && <Tab label="Mina" value="mine" />}
+					<Tab label="Anmälda" value="signed-up" />
 				</Tabs>
 			)}
 
@@ -286,7 +314,9 @@ function RequestsPage() {
 				<Typography color="text.secondary">
 					{tab === "mine"
 						? "Du har inga förfrågningar än."
-						: "Inga förfrågningar ännu."}
+						: tab === "signed-up"
+							? "Du är inte anmäld till någon förfrågan."
+							: "Inga förfrågningar ännu."}
 				</Typography>
 			) : (
 				<Stack spacing={4}>
@@ -404,6 +434,14 @@ function RequestsPage() {
 																			}
 																		>
 																			Avanmäl
+																		</Button>
+																	) : req.myBlock ? (
+																		<Button
+																			size="small"
+																			variant="outlined"
+																			disabled
+																		>
+																			Borttagen
 																		</Button>
 																	) : (
 																		<Button
@@ -575,6 +613,61 @@ function RequestsPage() {
 											</Stack>
 										</Box>
 									)}
+
+									{isOwner && req.blocks.length > 0 && (
+										<Box>
+											<Typography
+												variant="overline"
+												color="text.secondary"
+												display="block"
+												mb={0.5}
+											>
+												Blockerade
+											</Typography>
+											<Stack spacing={1}>
+												{req.blocks.map((b) => (
+													<Box
+														key={b.userId}
+														display="flex"
+														alignItems="flex-start"
+														justifyContent="space-between"
+														gap={1}
+													>
+														<Box>
+															<Typography variant="body2">
+																{b.userName}
+															</Typography>
+															<Typography
+																variant="caption"
+																color="text.secondary"
+																display="block"
+															>
+																{b.reason}
+															</Typography>
+														</Box>
+														<Tooltip title="Återinför">
+															<IconButton
+																size="small"
+																color="primary"
+																onClick={() =>
+																	handleUnblock(req.id, b.userId)
+																}
+															>
+																<UndoIcon fontSize="small" />
+															</IconButton>
+														</Tooltip>
+													</Box>
+												))}
+											</Stack>
+										</Box>
+									)}
+
+									{!isOwner && req.myBlock && (
+										<Alert severity="warning">
+											Du har tagits bort från denna förfrågan. Anledning:{" "}
+											{req.myBlock}
+										</Alert>
+									)}
 								</Stack>
 
 								<Box mt={2} pt={2} borderTop={1} borderColor="divider">
@@ -601,6 +694,10 @@ function RequestsPage() {
 										</Box>
 									) : isRouterLoading ? (
 										<Skeleton variant="rounded" height={36} />
+									) : req.myBlock ? (
+										<Button fullWidth variant="outlined" disabled>
+											Du har tagits bort från denna förfrågan
+										</Button>
 									) : isSignedUp ? (
 										<Button
 											fullWidth

@@ -47,6 +47,11 @@ export { Prisma }
  */
 export type Request = Prisma.RequestModel
 /**
+ * Model RequestBlock
+ * 
+ */
+export type RequestBlock = Prisma.RequestBlockModel
+/**
  * Model RequestSignup
  * 
  */

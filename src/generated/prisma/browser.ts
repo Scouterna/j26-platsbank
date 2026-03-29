@@ -23,6 +23,11 @@ export * from './enums.ts';
  */
 export type Request = Prisma.RequestModel
 /**
+ * Model RequestBlock
+ * 
+ */
+export type RequestBlock = Prisma.RequestBlockModel
+/**
  * Model RequestSignup
  * 
  */

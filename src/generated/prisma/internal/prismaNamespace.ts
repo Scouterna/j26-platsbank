@@ -385,6 +385,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   Request: 'Request',
+  RequestBlock: 'RequestBlock',
   RequestSignup: 'RequestSignup'
 } as const
 
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "request" | "requestSignup"
+    modelProps: "request" | "requestBlock" | "requestSignup"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -476,6 +477,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RequestCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RequestCountAggregateOutputType> | number
+        }
+      }
+    }
+    RequestBlock: {
+      payload: Prisma.$RequestBlockPayload<ExtArgs>
+      fields: Prisma.RequestBlockFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RequestBlockFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RequestBlockFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        findFirst: {
+          args: Prisma.RequestBlockFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RequestBlockFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        findMany: {
+          args: Prisma.RequestBlockFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>[]
+        }
+        create: {
+          args: Prisma.RequestBlockCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        createMany: {
+          args: Prisma.RequestBlockCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RequestBlockCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>[]
+        }
+        delete: {
+          args: Prisma.RequestBlockDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        update: {
+          args: Prisma.RequestBlockUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        deleteMany: {
+          args: Prisma.RequestBlockDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RequestBlockUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RequestBlockUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>[]
+        }
+        upsert: {
+          args: Prisma.RequestBlockUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequestBlockPayload>
+        }
+        aggregate: {
+          args: Prisma.RequestBlockAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRequestBlock>
+        }
+        groupBy: {
+          args: Prisma.RequestBlockGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequestBlockGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RequestBlockCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequestBlockCountAggregateOutputType> | number
         }
       }
     }
@@ -607,6 +682,18 @@ export const RequestScalarFieldEnum = {
 } as const
 
 export type RequestScalarFieldEnum = (typeof RequestScalarFieldEnum)[keyof typeof RequestScalarFieldEnum]
+
+
+export const RequestBlockScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  userId: 'userId',
+  userName: 'userName',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type RequestBlockScalarFieldEnum = (typeof RequestBlockScalarFieldEnum)[keyof typeof RequestBlockScalarFieldEnum]
 
 
 export const RequestSignupScalarFieldEnum = {
@@ -804,6 +891,7 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   request?: Prisma.RequestOmit
+  requestBlock?: Prisma.RequestBlockOmit
   requestSignup?: Prisma.RequestSignupOmit
 }
 

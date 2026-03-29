@@ -74,7 +74,7 @@ function EditForm({
 	const [date, setDate] = useState<Dayjs | null>(initial.date);
 	const [startTime, setStartTime] = useState<Dayjs | null>(initial.startTime);
 	const [endTime, setEndTime] = useState<Dayjs | null>(initial.endTime);
-	const [peopleNeeded, setPeopleNeeded] = useState(initial.peopleNeeded);
+	const [peopleNeeded, setPeopleNeeded] = useState(String(initial.peopleNeeded));
 	const [location, setLocation] = useState(initial.location);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -100,7 +100,7 @@ function EditForm({
 					description,
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
-					peopleNeeded,
+					peopleNeeded: Number(peopleNeeded),
 					location: location || undefined,
 				},
 			});
@@ -161,7 +161,7 @@ function EditForm({
 							label="Antal behövda"
 							type="number"
 							value={peopleNeeded}
-							onChange={(e) => setPeopleNeeded(Number(e.target.value))}
+							onChange={(e) => setPeopleNeeded(e.target.value)}
 							required
 							fullWidth
 							slotProps={{

@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Request: 'Request',
+  RequestBlock: 'RequestBlock',
   RequestSignup: 'RequestSignup'
 } as const
 
@@ -86,6 +87,18 @@ export const RequestScalarFieldEnum = {
 } as const
 
 export type RequestScalarFieldEnum = (typeof RequestScalarFieldEnum)[keyof typeof RequestScalarFieldEnum]
+
+
+export const RequestBlockScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  userId: 'userId',
+  userName: 'userName',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type RequestBlockScalarFieldEnum = (typeof RequestBlockScalarFieldEnum)[keyof typeof RequestBlockScalarFieldEnum]
 
 
 export const RequestSignupScalarFieldEnum = {

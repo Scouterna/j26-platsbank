@@ -20,6 +20,13 @@ export const getRequests = createServerFn({ method: "GET" }).handler(
 						comment: true,
 					},
 				},
+				blocks: {
+					select: {
+						userId: true,
+						userName: true,
+						reason: true,
+					},
+				},
 			},
 		});
 
@@ -42,6 +49,10 @@ export const getRequests = createServerFn({ method: "GET" }).handler(
 								comment: null,
 							},
 				),
+				blocks: isOwner ? req.blocks : ([] as typeof req.blocks),
+				myBlock: user
+					? (req.blocks.find((b) => b.userId === user.sub)?.reason ?? null)
+					: null,
 			};
 		});
 	},
@@ -119,6 +130,10 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string; comment?: string }) => input)
 	.handler(async ({ data }) => {
 		const user = await requireUser();
+		const block = await prisma.requestBlock.findUnique({
+			where: { requestId_userId: { requestId: data.requestId, userId: user.sub } },
+		});
+		if (block) throw new Response("Forbidden", { status: 403 });
 		return prisma.requestSignup.create({
 			data: {
 				requestId: data.requestId,
@@ -203,6 +218,39 @@ export const withdrawFromRequest = createServerFn({ method: "POST" })
 	});
 
 export const kickFromRequest = createServerFn({ method: "POST" })
+	.inputValidator(
+		(input: { requestId: string; userId: string; reason: string }) => input,
+	)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const request = await prisma.request.findUnique({
+			where: { id: data.requestId },
+		});
+		if (!request) throw new Response("Not Found", { status: 404 });
+		const isAdmin = user.roles.includes("admin");
+		const isOwner =
+			request.createdBy === user.sub && user.roles.includes("requests:create");
+		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
+		const signup = await prisma.requestSignup.findUnique({
+			where: { requestId_userId: { requestId: data.requestId, userId: data.userId } },
+		});
+		if (!signup) throw new Response("Not Found", { status: 404 });
+		await prisma.$transaction([
+			prisma.requestSignup.delete({ where: { id: signup.id } }),
+			prisma.requestBlock.upsert({
+				where: { requestId_userId: { requestId: data.requestId, userId: data.userId } },
+				update: { reason: data.reason, userName: signup.userName },
+				create: {
+					requestId: data.requestId,
+					userId: data.userId,
+					userName: signup.userName,
+					reason: data.reason,
+				},
+			}),
+		]);
+	});
+
+export const unblockFromRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string; userId: string }) => input)
 	.handler(async ({ data }) => {
 		const user = await requireUser();
@@ -214,10 +262,8 @@ export const kickFromRequest = createServerFn({ method: "POST" })
 		const isOwner =
 			request.createdBy === user.sub && user.roles.includes("requests:create");
 		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
-		return prisma.requestSignup.delete({
-			where: {
-				requestId_userId: { requestId: data.requestId, userId: data.userId },
-			},
+		return prisma.requestBlock.delete({
+			where: { requestId_userId: { requestId: data.requestId, userId: data.userId } },
 		});
 	});
 
