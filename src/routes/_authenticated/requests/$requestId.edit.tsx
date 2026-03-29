@@ -1,4 +1,12 @@
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import {
+	Box,
+	Button,
+	Stack,
+	TextField,
+	ToggleButton,
+	ToggleButtonGroup,
+	Typography,
+} from "@mui/material";
 import {
 	DatePicker,
 	LocalizationProvider,
@@ -50,6 +58,7 @@ function EditRequestPage() {
 		endTime: dayjs(req.endTime),
 		peopleNeeded: req.peopleNeeded,
 		location: req.location ?? "",
+		type: (req.type ?? "leader") as "leader" | "staff",
 	};
 
 	return <EditForm requestId={req.id} initial={initial} />;
@@ -63,20 +72,29 @@ interface FormValues {
 	endTime: Dayjs;
 	peopleNeeded: number;
 	location: string;
+	type: "leader" | "staff";
 }
 
 function EditForm({
 	requestId,
 	initial,
-}: { requestId: string; initial: FormValues }) {
+}: {
+	requestId: string;
+	initial: FormValues;
+}) {
 	useAppBarTitle("Redigera förfrågan");
 	const navigate = useNavigate();
+	const user = useUser();
+	const canBookStaff = user.roles.includes("requests:staff:book");
+	const [type, setType] = useState<"leader" | "staff">(initial.type);
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [date, setDate] = useState<Dayjs | null>(initial.date);
 	const [startTime, setStartTime] = useState<Dayjs | null>(initial.startTime);
 	const [endTime, setEndTime] = useState<Dayjs | null>(initial.endTime);
-	const [peopleNeeded, setPeopleNeeded] = useState(String(initial.peopleNeeded));
+	const [peopleNeeded, setPeopleNeeded] = useState(
+		String(initial.peopleNeeded),
+	);
 	const [location, setLocation] = useState(initial.location);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -104,6 +122,7 @@ function EditForm({
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
 					location: location || undefined,
+					type,
 				},
 			});
 			navigate({ to: "/" });
@@ -118,6 +137,32 @@ function EditForm({
 			<Box maxWidth={600}>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
+						{canBookStaff && (
+							<Box>
+								<Typography variant="body2" color="text.secondary" mb={1}>
+									Typ av förfrågan
+								</Typography>
+								<ToggleButtonGroup
+									value={type}
+									exclusive
+									onChange={(_, v) => {
+										if (v) setType(v);
+									}}
+								>
+									<ToggleButton value="leader">Ledare</ToggleButton>
+									<ToggleButton value="staff">Funktionär</ToggleButton>
+								</ToggleButtonGroup>
+								<Typography
+									variant="caption"
+									color="text.secondary"
+									display="block"
+									mt={0.5}
+								>
+									Funktionärer kan se alla typer av pass, men ledare kan endast
+									se ledarpass.
+								</Typography>
+							</Box>
+						)}
 						<TextField
 							label="Titel"
 							value={title}

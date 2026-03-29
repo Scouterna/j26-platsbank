@@ -17,6 +17,7 @@ model Request {
   location     String?
   createdBy    String
   creatorName  String
+  type         String          @default("leader")
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   signups      RequestSignup[]

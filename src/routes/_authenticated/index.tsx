@@ -111,6 +111,14 @@ function getDayLabel(d: Date | string) {
 		return date.toLocaleDateString("sv-SE", { weekday: "long" });
 	}
 
+	if (date.getFullYear() === today.getFullYear()) {
+		return date.toLocaleDateString("sv-SE", {
+			month: "long",
+			weekday: "long",
+			day: "numeric",
+		});
+	}
+
 	return date.toLocaleDateString("sv-SE", { dateStyle: "long" });
 }
 
@@ -140,6 +148,7 @@ function RequestsPage() {
 
 	const canCreate = user?.roles.includes("requests:create") ?? false;
 	const isAdmin = user?.roles.includes("admin") ?? false;
+	const showTypeLabel = user?.roles.includes("requests:staff:book") ?? false;
 
 	useAppBarTitle("Förfrågningar");
 
@@ -287,11 +296,11 @@ function RequestsPage() {
 
 	return (
 		<Box>
-			<Alert variant="outlined">
+			<Alert severity="info" variant="outlined">
 				I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
-				eller funktionär kan anmäla dig för att hjälpa till. I vissa fall kommer
-				lägerledningen att be specifika byar eller kårer att skriva upp sig på
-				vissa pass.
+				eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall
+				kan lägerledningen komma att be specifika byar eller kårer att skriva
+				upp sig på vissa pass.
 			</Alert>
 
 			<Box
@@ -447,6 +456,22 @@ function RequestsPage() {
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
 																	/>
+																	{showTypeLabel && (
+																		<Chip
+																			label={
+																				req.type === "staff"
+																					? "Funktionär"
+																					: "Ledare"
+																			}
+																			size="small"
+																			color={
+																				req.type === "staff"
+																					? "secondary"
+																					: "primary"
+																			}
+																			variant="outlined"
+																		/>
+																	)}
 																</Box>
 															</Box>
 
@@ -836,6 +861,9 @@ function RequestsPage() {
 						onChange={(e) => setKickReason(e.target.value)}
 						sx={{ mt: 1 }}
 					/>
+					<DialogContentText sx={{ mt: 1 }}>
+						Tänk på att motiveringen syns för personen du tar bort.
+					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setKickTarget(null)}>Avbryt</Button>

@@ -10,8 +10,11 @@ export const getRequests = createServerFn({ method: "GET" }).handler(
 		const token = getCookie("j26-auth_access-token");
 		const user = token ? await verifyAndGetUser(token) : null;
 
+		const canSeeStaff = user?.roles.includes("requests:staff:book") ?? false;
+
 		const requests = await prisma.request.findMany({
 			orderBy: { startTime: "asc" },
+			where: canSeeStaff ? undefined : { type: "leader" },
 			include: {
 				signups: {
 					select: {
@@ -72,6 +75,7 @@ interface CreateRequestInput {
 	endTime: string;
 	peopleNeeded: number;
 	location?: string;
+	type: "leader" | "staff";
 }
 
 export const createRequest = createServerFn({ method: "POST" })
@@ -79,6 +83,8 @@ export const createRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) => withLogging("createRequest", async () => {
 		const user = await requireUser();
 		if (!user.roles.includes("requests:create"))
+			throw new Response("Forbidden", { status: 403 });
+		if (data.type === "staff" && !user.roles.includes("requests:staff:book"))
 			throw new Response("Forbidden", { status: 403 });
 		return prisma.request.create({
 			data: {
@@ -88,6 +94,7 @@ export const createRequest = createServerFn({ method: "POST" })
 				endTime: new Date(data.endTime),
 				peopleNeeded: data.peopleNeeded,
 				location: data.location ?? null,
+				type: data.type,
 				createdBy: user.sub,
 				creatorName: user.name,
 			},
@@ -102,6 +109,7 @@ interface UpdateRequestInput {
 	endTime: string;
 	peopleNeeded: number;
 	location?: string;
+	type: "leader" | "staff";
 }
 
 export const updateRequest = createServerFn({ method: "POST" })
@@ -114,6 +122,8 @@ export const updateRequest = createServerFn({ method: "POST" })
 		const isOwner =
 			request.createdBy === user.sub && user.roles.includes("requests:create");
 		if (!isAdmin && !isOwner) throw new Response("Forbidden", { status: 403 });
+		if (data.type === "staff" && !user.roles.includes("requests:staff:book"))
+			throw new Response("Forbidden", { status: 403 });
 		return prisma.request.update({
 			where: { id: data.id },
 			data: {
@@ -123,6 +133,7 @@ export const updateRequest = createServerFn({ method: "POST" })
 				endTime: new Date(data.endTime),
 				peopleNeeded: data.peopleNeeded,
 				location: data.location ?? null,
+				type: data.type,
 			},
 		});
 	}));
