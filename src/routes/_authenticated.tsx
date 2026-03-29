@@ -40,7 +40,7 @@ function AuthenticatedLayout() {
 
 	return (
 		<UserContext.Provider value={user}>
-			<Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+			<Container maxWidth="lg" sx={{ mb: 4 }}>
 				<Outlet />
 			</Container>
 		</UserContext.Provider>

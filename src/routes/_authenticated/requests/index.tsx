@@ -282,10 +282,9 @@ function RequestsPage() {
 				justifyContent="space-between"
 				alignItems={{ xs: "flex-start", sm: "center" }}
 				flexDirection={{ xs: "column", sm: "row" }}
-				gap={2}
 				mb={3}
 			>
-				<Box display="flex" gap={1} alignItems="center">
+				<Box display="flex" gap={1} alignItems="center" order={{ xs: 0, sm: 1 }} alignSelf={{ xs: "flex-end", sm: "auto" }} mt={{ xs: 1, sm: 0 }}>
 					<Tooltip title="Uppdatera">
 						<IconButton onClick={() => router.invalidate()} disabled={isRouterLoading}>
 							<RefreshIcon />
@@ -302,13 +301,12 @@ function RequestsPage() {
 						</Button>
 					)}
 				</Box>
+				<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ order: { xs: 1, sm: 0 } }}>
+					{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
+					{canCreate && <Tab label="Mina" value="mine" />}
+					<Tab label="Anmälda" value="signed-up" />
+				</Tabs>
 			</Box>
-
-			<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-				{canCreate ? <Tab label="Andras" value="others" /> : <Tab label="Alla" value="others" />}
-				{canCreate && <Tab label="Mina" value="mine" />}
-				<Tab label="Anmälda" value="signed-up" />
-			</Tabs>
 
 			{filtered.length === 0 ? (
 				<Typography color="text.secondary">
