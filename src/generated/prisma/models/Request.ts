@@ -44,6 +44,7 @@ export type RequestMinAggregateOutputType = {
   location: string | null
   createdBy: string | null
   creatorName: string | null
+  type: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -58,6 +59,7 @@ export type RequestMaxAggregateOutputType = {
   location: string | null
   createdBy: string | null
   creatorName: string | null
+  type: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -72,6 +74,7 @@ export type RequestCountAggregateOutputType = {
   location: number
   createdBy: number
   creatorName: number
+  type: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -96,6 +99,7 @@ export type RequestMinAggregateInputType = {
   location?: true
   createdBy?: true
   creatorName?: true
+  type?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -110,6 +114,7 @@ export type RequestMaxAggregateInputType = {
   location?: true
   createdBy?: true
   creatorName?: true
+  type?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -124,6 +129,7 @@ export type RequestCountAggregateInputType = {
   location?: true
   createdBy?: true
   creatorName?: true
+  type?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -225,6 +231,7 @@ export type RequestGroupByOutputType = {
   location: string | null
   createdBy: string
   creatorName: string
+  type: string
   createdAt: Date
   updatedAt: Date
   _count: RequestCountAggregateOutputType | null
@@ -262,6 +269,7 @@ export type RequestWhereInput = {
   location?: Prisma.StringNullableFilter<"Request"> | string | null
   createdBy?: Prisma.StringFilter<"Request"> | string
   creatorName?: Prisma.StringFilter<"Request"> | string
+  type?: Prisma.StringFilter<"Request"> | string
   createdAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   signups?: Prisma.RequestSignupListRelationFilter
@@ -278,6 +286,7 @@ export type RequestOrderByWithRelationInput = {
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   signups?: Prisma.RequestSignupOrderByRelationAggregateInput
@@ -297,6 +306,7 @@ export type RequestWhereUniqueInput = Prisma.AtLeast<{
   location?: Prisma.StringNullableFilter<"Request"> | string | null
   createdBy?: Prisma.StringFilter<"Request"> | string
   creatorName?: Prisma.StringFilter<"Request"> | string
+  type?: Prisma.StringFilter<"Request"> | string
   createdAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Request"> | Date | string
   signups?: Prisma.RequestSignupListRelationFilter
@@ -313,6 +323,7 @@ export type RequestOrderByWithAggregationInput = {
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.RequestCountOrderByAggregateInput
@@ -335,6 +346,7 @@ export type RequestScalarWhereWithAggregatesInput = {
   location?: Prisma.StringNullableWithAggregatesFilter<"Request"> | string | null
   createdBy?: Prisma.StringWithAggregatesFilter<"Request"> | string
   creatorName?: Prisma.StringWithAggregatesFilter<"Request"> | string
+  type?: Prisma.StringWithAggregatesFilter<"Request"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Request"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Request"> | Date | string
 }
@@ -349,6 +361,7 @@ export type RequestCreateInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupCreateNestedManyWithoutRequestInput
@@ -365,6 +378,7 @@ export type RequestUncheckedCreateInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupUncheckedCreateNestedManyWithoutRequestInput
@@ -381,6 +395,7 @@ export type RequestUpdateInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUpdateManyWithoutRequestNestedInput
@@ -397,6 +412,7 @@ export type RequestUncheckedUpdateInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUncheckedUpdateManyWithoutRequestNestedInput
@@ -413,6 +429,7 @@ export type RequestCreateManyInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -427,6 +444,7 @@ export type RequestUpdateManyMutationInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -441,6 +459,7 @@ export type RequestUncheckedUpdateManyInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,6 +474,7 @@ export type RequestCountOrderByAggregateInput = {
   location?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -473,6 +493,7 @@ export type RequestMaxOrderByAggregateInput = {
   location?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -487,6 +508,7 @@ export type RequestMinOrderByAggregateInput = {
   location?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -558,6 +580,7 @@ export type RequestCreateWithoutBlocksInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupCreateNestedManyWithoutRequestInput
@@ -573,6 +596,7 @@ export type RequestUncheckedCreateWithoutBlocksInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   signups?: Prisma.RequestSignupUncheckedCreateNestedManyWithoutRequestInput
@@ -604,6 +628,7 @@ export type RequestUpdateWithoutBlocksInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUpdateManyWithoutRequestNestedInput
@@ -619,6 +644,7 @@ export type RequestUncheckedUpdateWithoutBlocksInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   signups?: Prisma.RequestSignupUncheckedUpdateManyWithoutRequestNestedInput
@@ -634,6 +660,7 @@ export type RequestCreateWithoutSignupsInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   blocks?: Prisma.RequestBlockCreateNestedManyWithoutRequestInput
@@ -649,6 +676,7 @@ export type RequestUncheckedCreateWithoutSignupsInput = {
   location?: string | null
   createdBy: string
   creatorName: string
+  type?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   blocks?: Prisma.RequestBlockUncheckedCreateNestedManyWithoutRequestInput
@@ -680,6 +708,7 @@ export type RequestUpdateWithoutSignupsInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   blocks?: Prisma.RequestBlockUpdateManyWithoutRequestNestedInput
@@ -695,6 +724,7 @@ export type RequestUncheckedUpdateWithoutSignupsInput = {
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   blocks?: Prisma.RequestBlockUncheckedUpdateManyWithoutRequestNestedInput
@@ -750,6 +780,7 @@ export type RequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   location?: boolean
   createdBy?: boolean
   creatorName?: boolean
+  type?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   signups?: boolean | Prisma.Request$signupsArgs<ExtArgs>
@@ -767,6 +798,7 @@ export type RequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   location?: boolean
   createdBy?: boolean
   creatorName?: boolean
+  type?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["request"]>
@@ -781,6 +813,7 @@ export type RequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   location?: boolean
   createdBy?: boolean
   creatorName?: boolean
+  type?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["request"]>
@@ -795,11 +828,12 @@ export type RequestSelectScalar = {
   location?: boolean
   createdBy?: boolean
   creatorName?: boolean
+  type?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "startTime" | "endTime" | "peopleNeeded" | "location" | "createdBy" | "creatorName" | "createdAt" | "updatedAt", ExtArgs["result"]["request"]>
+export type RequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "startTime" | "endTime" | "peopleNeeded" | "location" | "createdBy" | "creatorName" | "type" | "createdAt" | "updatedAt", ExtArgs["result"]["request"]>
 export type RequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   signups?: boolean | Prisma.Request$signupsArgs<ExtArgs>
   blocks?: boolean | Prisma.Request$blocksArgs<ExtArgs>
@@ -824,6 +858,7 @@ export type $RequestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     location: string | null
     createdBy: string
     creatorName: string
+    type: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["request"]>
@@ -1260,6 +1295,7 @@ export interface RequestFieldRefs {
   readonly location: Prisma.FieldRef<"Request", 'String'>
   readonly createdBy: Prisma.FieldRef<"Request", 'String'>
   readonly creatorName: Prisma.FieldRef<"Request", 'String'>
+  readonly type: Prisma.FieldRef<"Request", 'String'>
   readonly createdAt: Prisma.FieldRef<"Request", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Request", 'DateTime'>
 }

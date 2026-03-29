@@ -82,6 +82,7 @@ export const RequestScalarFieldEnum = {
   location: 'location',
   createdBy: 'createdBy',
   creatorName: 'creatorName',
+  type: 'type',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
