@@ -6,7 +6,7 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { type Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";

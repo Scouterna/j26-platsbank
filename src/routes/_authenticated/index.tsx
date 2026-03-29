@@ -59,6 +59,7 @@ const CLAIM_TOKENS_KEY = "j26-claim-tokens";
 interface GuestSignup {
 	token: string;
 	requestId: string;
+	userId: string;
 }
 
 function getStoredSignups(): GuestSignup[] {
@@ -229,7 +230,7 @@ function RequestsPage() {
 				},
 			});
 		} else {
-			const { claimToken } = await guestSignUpForRequest({
+			const { claimToken, userId } = await guestSignUpForRequest({
 				data: {
 					requestId: signupDialogId,
 					name: guestName,
@@ -239,7 +240,7 @@ function RequestsPage() {
 			});
 			const updated = [
 				...guestSignups,
-				{ token: claimToken, requestId: signupDialogId },
+				{ token: claimToken, requestId: signupDialogId, userId },
 			];
 			setGuestSignups(updated);
 			saveStoredSignups(updated);
@@ -286,6 +287,13 @@ function RequestsPage() {
 
 	return (
 		<Box>
+			<Alert variant="outlined">
+				I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
+				eller funktionär kan anmäla dig för att hjälpa till. I vissa fall kommer
+				lägerledningen att be specifika byar eller kårer att skriva upp sig på
+				vissa pass.
+			</Alert>
+
 			<Box
 				display="flex"
 				justifyContent="space-between"
@@ -312,7 +320,7 @@ function RequestsPage() {
 						<Button
 							variant="contained"
 							startIcon={<AddIcon />}
-							component={Link as any}
+							component={Link}
 							to="/requests/new"
 						>
 							Ny förfrågan
@@ -333,7 +341,6 @@ function RequestsPage() {
 					<Tab label="Anmälda" value="signed-up" />
 				</Tabs>
 			</Box>
-
 			{filtered.length === 0 ? (
 				<Typography color="text.secondary">
 					{tab === "mine"
@@ -384,7 +391,16 @@ function RequestsPage() {
 										{items.map((req) => {
 											const isSignedUp = user
 												? req.signups.some((s) => s.userId === user.sub)
-												: guestSignups.some((s) => s.requestId === req.id);
+												: req.signups.some((s) =>
+														guestSignups.some(
+															(g) =>
+																g.userId === s.userId && g.requestId === req.id,
+														),
+													);
+											const isRemoved = user
+												? !!req.myBlock
+												: !isSignedUp &&
+													guestSignups.some((g) => g.requestId === req.id);
 											const isFull = req.signups.length >= req.peopleNeeded;
 
 											return (
@@ -448,6 +464,17 @@ function RequestsPage() {
 																			width={80}
 																			height={30}
 																		/>
+																	) : isRemoved ? (
+																		<Button
+																			size="small"
+																			variant="outlined"
+																			color="warning"
+																			onClick={() =>
+																				setSelectedRequestId(req.id)
+																			}
+																		>
+																			Nekad
+																		</Button>
 																	) : isSignedUp ? (
 																		<Button
 																			size="small"
@@ -458,16 +485,6 @@ function RequestsPage() {
 																			}
 																		>
 																			Avanmäl
-																		</Button>
-																	) : req.myBlock ? (
-																		<Button
-																			size="small"
-																			variant="outlined"
-																			onClick={() =>
-																				setSelectedRequestId(req.id)
-																			}
-																		>
-																			Borttagen
 																		</Button>
 																	) : (
 																		<Button
@@ -500,7 +517,6 @@ function RequestsPage() {
 					})}
 				</Stack>
 			)}
-
 			{/* Detail drawer */}
 			<Drawer
 				anchor="right"
@@ -513,7 +529,14 @@ function RequestsPage() {
 						const req = selectedRequest;
 						const isSignedUp = user
 							? req.signups.some((s) => s.userId === user.sub)
-							: guestSignups.some((s) => s.requestId === req.id);
+							: req.signups.some((s) =>
+									guestSignups.some(
+										(g) => g.userId === s.userId && g.requestId === req.id,
+									),
+								);
+						const isRemoved = user
+							? !!req.myBlock
+							: !isSignedUp && guestSignups.some((g) => g.requestId === req.id);
 						const isFull = req.signups.length >= req.peopleNeeded;
 						const isOwner =
 							isAdmin ||
@@ -686,10 +709,10 @@ function RequestsPage() {
 										</Box>
 									)}
 
-									{!isOwner && req.myBlock && (
+									{!isOwner && isRemoved && (
 										<Alert severity="warning">
-											Du har tagits bort från denna förfrågan. Anledning:{" "}
-											{req.myBlock}
+											Du har nekats deltagande i denna förfrågan.
+											{req.myBlock && ` Anledning: ${req.myBlock}`}
 										</Alert>
 									)}
 								</Stack>
@@ -718,11 +741,7 @@ function RequestsPage() {
 										</Box>
 									) : isRouterLoading ? (
 										<Skeleton variant="rounded" height={36} />
-									) : req.myBlock ? (
-										<Button fullWidth variant="outlined" disabled>
-											Du har tagits bort från denna förfrågan
-										</Button>
-									) : isSignedUp ? (
+									) : isRemoved ? null : isSignedUp ? (
 										<Button
 											fullWidth
 											variant="outlined"
@@ -749,7 +768,6 @@ function RequestsPage() {
 						);
 					})()}
 			</Drawer>
-
 			{/* Signup dialog */}
 			<Dialog
 				open={signupDialogId !== null}
@@ -799,7 +817,6 @@ function RequestsPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
-
 			{/* Kick dialog */}
 			<Dialog
 				open={kickTarget !== null}
@@ -831,7 +848,6 @@ function RequestsPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
-
 			{/* Withdraw confirmation dialog */}
 			<Dialog
 				open={pendingWithdrawId !== null}
@@ -859,7 +875,6 @@ function RequestsPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
-
 			{/* Delete request dialog */}
 			<Dialog
 				open={pendingDeleteId !== null}

@@ -154,20 +154,21 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 			comment?: string;
 		}) => input,
 	)
-	.handler(({ data }): Promise<{ claimToken: string }> => withLogging("guestSignUpForRequest", async () => {
+	.handler(({ data }): Promise<{ claimToken: string; userId: string }> => withLogging("guestSignUpForRequest", async () => {
 		const { randomUUID } = await import("node:crypto");
 		const claimToken = randomUUID();
+		const userId = randomUUID();
 		await prisma.requestSignup.create({
 			data: {
 				requestId: data.requestId,
-				userId: randomUUID(),
+				userId,
 				userName: data.name,
 				scoutGroup: data.scoutGroup,
 				comment: data.comment ?? null,
 				claimToken,
 			},
 		});
-		return { claimToken };
+		return { claimToken, userId };
 	}));
 
 export const claimGuestSignups = createServerFn({ method: "POST" })
@@ -180,10 +181,24 @@ export const claimGuestSignups = createServerFn({ method: "POST" })
 				where: { claimToken: token },
 			});
 			if (!signup) continue;
-			const block = await prisma.requestBlock.findUnique({
+			const guestBlock = await prisma.requestBlock.findUnique({
+				where: { requestId_userId: { requestId: signup.requestId, userId: signup.userId } },
+			});
+			const userBlock = await prisma.requestBlock.findUnique({
 				where: { requestId_userId: { requestId: signup.requestId, userId: user.sub } },
 			});
-			if (block) {
+			if (guestBlock || userBlock) {
+				// Transfer block to real user if it was only on the guest account
+				if (guestBlock && !userBlock) {
+					await prisma.requestBlock.create({
+						data: {
+							requestId: signup.requestId,
+							userId: user.sub,
+							userName: user.name,
+							reason: guestBlock.reason,
+						},
+					});
+				}
 				await prisma.requestSignup.delete({ where: { id: signup.id } });
 				continue;
 			}
