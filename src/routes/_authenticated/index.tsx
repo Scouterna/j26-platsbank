@@ -7,7 +7,6 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import UndoIcon from "@mui/icons-material/Undo";
 import {
 	Alert,
@@ -39,7 +38,7 @@ import {
 	useRouter,
 	useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import {
@@ -150,7 +149,18 @@ function RequestsPage() {
 	const isAdmin = user?.roles.includes("admin") ?? false;
 	const showTypeLabel = user?.roles.includes("requests:staff:book") ?? false;
 
-	useAppBarTitle("Förfrågningar");
+	const handleRefresh = useCallback(() => router.invalidate(), [router]);
+
+	useAppBarTitle({
+		title: "Förfrågningar",
+		action: {
+			icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>',
+			label: "Uppdatera",
+			type: "event",
+			id: "refresh",
+		},
+		onAction: handleRefresh,
+	});
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on user identity only
 	useEffect(() => {
@@ -317,14 +327,6 @@ function RequestsPage() {
 					order={{ xs: 0, sm: 1 }}
 					alignSelf={{ xs: "flex-end", sm: "auto" }}
 				>
-					<Tooltip title="Uppdatera">
-						<IconButton
-							onClick={() => router.invalidate()}
-							disabled={isRouterLoading}
-						>
-							<RefreshIcon />
-						</IconButton>
-					</Tooltip>
 					{canCreate && (
 						<Button
 							variant="contained"
