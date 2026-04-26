@@ -75,6 +75,8 @@ interface CreateRequestInput {
 	endTime: string;
 	peopleNeeded: number;
 	location?: string;
+	contactName?: string;
+	contactPhone?: string;
 	type: "leader" | "staff";
 }
 
@@ -94,6 +96,8 @@ export const createRequest = createServerFn({ method: "POST" })
 				endTime: new Date(data.endTime),
 				peopleNeeded: data.peopleNeeded,
 				location: data.location ?? null,
+				contactName: data.contactName ?? null,
+				contactPhone: data.contactPhone ?? null,
 				type: data.type,
 				createdBy: user.sub,
 				creatorName: user.name,
@@ -109,6 +113,8 @@ interface UpdateRequestInput {
 	endTime: string;
 	peopleNeeded: number;
 	location?: string;
+	contactName?: string;
+	contactPhone?: string;
 	type: "leader" | "staff";
 }
 
@@ -133,6 +139,8 @@ export const updateRequest = createServerFn({ method: "POST" })
 				endTime: new Date(data.endTime),
 				peopleNeeded: data.peopleNeeded,
 				location: data.location ?? null,
+				contactName: data.contactName ?? null,
+				contactPhone: data.contactPhone ?? null,
 				type: data.type,
 			},
 		});

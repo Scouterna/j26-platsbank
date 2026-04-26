@@ -7,6 +7,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
+import PhoneIcon from "@mui/icons-material/Phone";
 import UndoIcon from "@mui/icons-material/Undo";
 import {
 	Alert,
@@ -622,6 +623,34 @@ function RequestsPage() {
 											/>
 										)}
 									</Box>
+
+									{(req.contactName || req.contactPhone) && (
+										<Box>
+											<Typography
+												variant="overline"
+												color="text.secondary"
+												display="block"
+											>
+												Kontaktperson
+											</Typography>
+											{req.contactName && (
+												<Typography variant="body2">{req.contactName}</Typography>
+											)}
+											{req.contactPhone && (
+												<Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
+													<PhoneIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+													<Typography
+														variant="body2"
+														component="a"
+														href={`tel:${req.contactPhone}`}
+														sx={{ color: "inherit", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+													>
+														{req.contactPhone}
+													</Typography>
+												</Box>
+											)}
+										</Box>
+									)}
 
 									<Typography variant="caption" color="text.secondary">
 										Skapad av {req.creatorName}

@@ -58,6 +58,8 @@ function EditRequestPage() {
 		endTime: dayjs(req.endTime),
 		peopleNeeded: req.peopleNeeded,
 		location: req.location ?? "",
+		contactName: req.contactName ?? "",
+		contactPhone: req.contactPhone ?? "",
 		type: (req.type ?? "leader") as "leader" | "staff",
 	};
 
@@ -72,6 +74,8 @@ interface FormValues {
 	endTime: Dayjs;
 	peopleNeeded: number;
 	location: string;
+	contactName: string;
+	contactPhone: string;
 	type: "leader" | "staff";
 }
 
@@ -96,6 +100,8 @@ function EditForm({
 		String(initial.peopleNeeded),
 	);
 	const [location, setLocation] = useState(initial.location);
+	const [contactName, setContactName] = useState(initial.contactName);
+	const [contactPhone, setContactPhone] = useState(initial.contactPhone);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -122,6 +128,8 @@ function EditForm({
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
 					location: location || undefined,
+					contactName: contactName || undefined,
+					contactPhone: contactPhone || undefined,
 					type,
 				},
 			});
@@ -219,6 +227,20 @@ function EditForm({
 							onChange={(e) => setLocation(e.target.value)}
 							fullWidth
 						/>
+						<Box display="flex" gap={2}>
+							<TextField
+								label="Kontaktperson (valfritt)"
+								value={contactName}
+								onChange={(e) => setContactName(e.target.value)}
+								fullWidth
+							/>
+							<TextField
+								label="Telefonnummer (valfritt)"
+								value={contactPhone}
+								onChange={(e) => setContactPhone(e.target.value)}
+								fullWidth
+							/>
+						</Box>
 						{error && (
 							<Typography color="error" variant="body2">
 								{error}

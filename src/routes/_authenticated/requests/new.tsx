@@ -42,6 +42,8 @@ function NewRequestPage() {
 	const [endTime, setEndTime] = useState<Dayjs | null>(null);
 	const [peopleNeeded, setPeopleNeeded] = useState("1");
 	const [location, setLocation] = useState("");
+	const [contactName, setContactName] = useState("");
+	const [contactPhone, setContactPhone] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +69,8 @@ function NewRequestPage() {
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
 					location: location || undefined,
+					contactName: contactName || undefined,
+					contactPhone: contactPhone || undefined,
 					type,
 				},
 			});
@@ -164,6 +168,20 @@ function NewRequestPage() {
 							onChange={(e) => setLocation(e.target.value)}
 							fullWidth
 						/>
+						<Box display="flex" gap={2}>
+							<TextField
+								label="Kontaktperson (valfritt)"
+								value={contactName}
+								onChange={(e) => setContactName(e.target.value)}
+								fullWidth
+							/>
+							<TextField
+								label="Telefonnummer (valfritt)"
+								value={contactPhone}
+								onChange={(e) => setContactPhone(e.target.value)}
+								fullWidth
+							/>
+						</Box>
 						{error && (
 							<Typography color="error" variant="body2">
 								{error}

@@ -80,6 +80,8 @@ export const RequestScalarFieldEnum = {
   endTime: 'endTime',
   peopleNeeded: 'peopleNeeded',
   location: 'location',
+  contactName: 'contactName',
+  contactPhone: 'contactPhone',
   createdBy: 'createdBy',
   creatorName: 'creatorName',
   type: 'type',
