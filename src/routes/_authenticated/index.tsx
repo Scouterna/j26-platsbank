@@ -194,6 +194,7 @@ function RequestsPage() {
 	);
 	const [signupDialogId, setSignupDialogId] = useState<string | null>(null);
 	const [signupComment, setSignupComment] = useState("");
+	const [signupPhone, setSignupPhone] = useState("");
 	const [guestName, setGuestName] = useState("");
 	const [guestScoutGroup, setGuestScoutGroup] = useState("");
 	const [guestSignups, setGuestSignups] = useState<GuestSignup[]>(() =>
@@ -283,6 +284,7 @@ function RequestsPage() {
 			await signUpForRequest({
 				data: {
 					requestId: signupDialogId,
+					phone: signupPhone || undefined,
 					comment: signupComment || undefined,
 				},
 			});
@@ -292,6 +294,7 @@ function RequestsPage() {
 					requestId: signupDialogId,
 					name: guestName,
 					scoutGroup: guestScoutGroup,
+					phone: signupPhone || undefined,
 					comment: signupComment || undefined,
 				},
 			});
@@ -304,6 +307,7 @@ function RequestsPage() {
 		}
 		setSignupDialogId(null);
 		setSignupComment("");
+		setSignupPhone("");
 		setGuestName("");
 		setGuestScoutGroup("");
 		router.invalidate();
@@ -725,6 +729,19 @@ function RequestsPage() {
 																	{s.scoutGroup}
 																</Typography>
 															)}
+															{s.phone && (
+																<Typography
+																	variant="caption"
+																	color="text.secondary"
+																	display="block"
+																	component="a"
+																	href={`tel:${s.phone}`}
+																	sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+																>
+																	<PhoneIcon sx={{ fontSize: 10, mr: 0.5, verticalAlign: "middle" }} />
+																	{s.phone}
+																</Typography>
+															)}
 															{s.comment && (
 																<Typography
 																	variant="caption"
@@ -889,6 +906,13 @@ function RequestsPage() {
 								/>
 							</>
 						)}
+						<TextField
+							label="Telefonnummer (valfritt)"
+							fullWidth
+							value={signupPhone}
+							onChange={(e) => setSignupPhone(e.target.value)}
+							helperText="Delas endast med arrangören för att underlätta kommunikation."
+						/>
 						<TextField
 							label="Kommentar (valfri)"
 							fullWidth

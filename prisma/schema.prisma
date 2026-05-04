@@ -44,6 +44,7 @@ model RequestSignup {
   userId     String
   userName   String
   scoutGroup String?
+  phone      String?
   comment    String?
   claimToken String?  @unique
   createdAt  DateTime @default(now())

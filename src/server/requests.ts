@@ -29,6 +29,7 @@ export const getRequests = createServerFn({ method: "GET" })
 							userId: true,
 							userName: true,
 							scoutGroup: true,
+							phone: true,
 							comment: true,
 						},
 					},
@@ -58,6 +59,7 @@ export const getRequests = createServerFn({ method: "GET" })
 									userId: s.userId,
 									userName: null,
 									scoutGroup: null,
+									phone: null,
 									comment: null,
 								},
 					),
@@ -163,7 +165,9 @@ export const updateRequest = createServerFn({ method: "POST" })
 	);
 
 export const signUpForRequest = createServerFn({ method: "POST" })
-	.inputValidator((input: { requestId: string; comment?: string }) => input)
+	.inputValidator(
+		(input: { requestId: string; phone?: string; comment?: string }) => input,
+	)
 	.handler(({ data }) =>
 		withLogging("signUpForRequest", async () => {
 			const user = await requireUser();
@@ -178,6 +182,7 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 					requestId: data.requestId,
 					userId: user.sub,
 					userName: user.name,
+					phone: data.phone ?? null,
 					comment: data.comment ?? null,
 				},
 			});
@@ -190,6 +195,7 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 			requestId: string;
 			name: string;
 			scoutGroup: string;
+			phone?: string;
 			comment?: string;
 		}) => input,
 	)
@@ -205,6 +211,7 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 						userId,
 						userName: data.name,
 						scoutGroup: data.scoutGroup,
+						phone: data.phone ?? null,
 						comment: data.comment ?? null,
 						claimToken,
 					},
