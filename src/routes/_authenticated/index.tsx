@@ -55,6 +55,7 @@ import {
 } from "#/server/requests";
 
 const CLAIM_TOKENS_KEY = "j26-claim-tokens";
+const INFO_HIDDEN_KEY = "j26-platsbank-info-hidden";
 
 interface GuestSignup {
 	token: string;
@@ -183,6 +184,11 @@ function RequestsPage() {
 		return () => clearInterval(id);
 	}, [router]);
 
+	const [infoOpen, setInfoOpen] = useState(
+		() =>
+			typeof window === "undefined" ||
+			!localStorage.getItem(INFO_HIDDEN_KEY),
+	);
 	const [tab, setTab] = useState<"others" | "mine" | "signed-up">("others");
 	const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 	const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
@@ -364,12 +370,36 @@ function RequestsPage() {
 
 	return (
 		<Box>
-			<Alert severity="info" variant="outlined">
-				I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
-				eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall
-				kan lägerledningen komma att be specifika byar eller kårer att skriva
-				upp sig på vissa pass.
-			</Alert>
+			<Collapse in={infoOpen}>
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2 }}
+					onClose={() => {
+						localStorage.setItem(INFO_HIDDEN_KEY, "1");
+						setInfoOpen(false);
+					}}
+				>
+					I platsbanken kan funktionärer annonsera behov av hjälp. Du som
+					ledare eller funktionär kan anmäla dig för att hjälpa till. I
+					särskilda fall kan lägerledningen komma att be specifika byar eller
+					kårer att skriva upp sig på vissa pass.
+				</Alert>
+			</Collapse>
+			{!infoOpen && (
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2, cursor: "pointer", py: 0.5 }}
+					onClick={() => {
+						localStorage.removeItem(INFO_HIDDEN_KEY);
+						setInfoOpen(true);
+					}}
+					action={<ExpandMoreIcon fontSize="small" />}
+				>
+					Om platsbanken
+				</Alert>
+			)}
 
 			<Box
 				display="flex"
