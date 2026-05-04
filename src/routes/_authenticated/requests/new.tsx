@@ -119,15 +119,21 @@ function NewRequestPage() {
 							required
 							fullWidth
 						/>
-						<TextField
-							label="Beskrivning"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							required
-							fullWidth
-							multiline
-							minRows={3}
-						/>
+						<Box>
+							<Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+								Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.
+							</Typography>
+							<TextField
+								label="Beskrivning"
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								required
+								fullWidth
+								multiline
+								minRows={5}
+								placeholder={"Vad jobbet innebär:\n\nVad du ska ta med/ha på dig:"}
+							/>
+						</Box>
 						<DatePicker
 							label="Datum"
 							value={date}
@@ -167,6 +173,8 @@ function NewRequestPage() {
 							value={location}
 							onChange={(e) => setLocation(e.target.value)}
 							fullWidth
+							placeholder="t.ex. Gå till blå flaggan på parkeringen"
+							helperText="Beskriv noggrant var volontären ska infinna sig."
 						/>
 						<Box display="flex" gap={2}>
 							<TextField
@@ -174,6 +182,7 @@ function NewRequestPage() {
 								value={contactName}
 								onChange={(e) => setContactName(e.target.value)}
 								fullWidth
+
 							/>
 							<TextField
 								label="Telefonnummer (valfritt)"
