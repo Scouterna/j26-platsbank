@@ -110,6 +110,7 @@ export const RequestSignupScalarFieldEnum = {
   userId: 'userId',
   userName: 'userName',
   scoutGroup: 'scoutGroup',
+  phone: 'phone',
   comment: 'comment',
   claimToken: 'claimToken',
   createdAt: 'createdAt'
