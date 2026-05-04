@@ -119,6 +119,11 @@ function EditForm({
 				.hour(endTime.hour())
 				.minute(endTime.minute())
 				.second(0);
+			if (endDateTime.valueOf() <= startDateTime.valueOf()) {
+				setError("Sluttiden måste vara efter starttiden.");
+				setSubmitting(false);
+				return;
+			}
 			await updateRequest({
 				data: {
 					id: requestId,

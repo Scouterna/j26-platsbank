@@ -61,6 +61,16 @@ function NewRequestPage() {
 				.hour(endTime.hour())
 				.minute(endTime.minute())
 				.second(0);
+			if (startDateTime.valueOf() <= Date.now()) {
+				setError("Förfrågan måste vara i framtiden.");
+				setSubmitting(false);
+				return;
+			}
+			if (endDateTime.valueOf() <= startDateTime.valueOf()) {
+				setError("Sluttiden måste vara efter starttiden.");
+				setSubmitting(false);
+				return;
+			}
 			await createRequest({
 				data: {
 					title,
