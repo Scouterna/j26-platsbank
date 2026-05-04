@@ -39,7 +39,7 @@ import {
 	useRouter,
 	useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import {
@@ -75,7 +75,9 @@ function saveStoredSignups(signups: GuestSignup[]) {
 }
 
 export const Route = createFileRoute("/_authenticated/")({
-	loader: () => getRequests(),
+	// SSR pass cannot read localStorage, so guest userIds are filled in by a
+	// client-side effect in RequestsPage that re-fetches with them.
+	loader: () => getRequests({ data: {} }),
 	component: RequestsPage,
 });
 
@@ -139,7 +141,7 @@ function groupByDay(items: Request[]) {
 type KickTarget = { requestId: string; userId: string; userName: string };
 
 function RequestsPage() {
-	const requests = Route.useLoaderData();
+	const loaderRequests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
 	const isRouterLoading = useRouterState({
@@ -199,6 +201,41 @@ function RequestsPage() {
 	);
 	const [kickTarget, setKickTarget] = useState<KickTarget | null>(null);
 	const [kickReason, setKickReason] = useState("");
+	const [guestMyBlocks, setGuestMyBlocks] = useState<Map<string, string>>(
+		() => new Map(),
+	);
+
+	// For unauthenticated guests, refetch with the locally-stored guest userIds
+	// so myBlock (and thus the rejection reason) gets populated. The SSR loader
+	// can't see localStorage so it always returns null myBlock for guests.
+	useEffect(() => {
+		if (user || guestSignups.length === 0) {
+			setGuestMyBlocks((prev) => (prev.size === 0 ? prev : new Map()));
+			return;
+		}
+		let cancelled = false;
+		const guestUserIds = guestSignups.map((g) => g.userId);
+		getRequests({ data: { guestUserIds } })
+			.then((data) => {
+				if (cancelled) return;
+				const next = new Map<string, string>();
+				for (const r of data) {
+					if (r.myBlock) next.set(r.id, r.myBlock);
+				}
+				setGuestMyBlocks(next);
+			})
+			.catch(() => {});
+		return () => {
+			cancelled = true;
+		};
+	}, [user, guestSignups]);
+
+	const requests = useMemo(() => {
+		if (!loaderRequests || guestMyBlocks.size === 0) return loaderRequests;
+		return loaderRequests.map((r) =>
+			r.myBlock ? r : { ...r, myBlock: guestMyBlocks.get(r.id) ?? null },
+		);
+	}, [loaderRequests, guestMyBlocks]);
 
 	if (!requests) return null;
 
