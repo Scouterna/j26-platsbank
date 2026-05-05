@@ -130,8 +130,14 @@ function NewRequestPage() {
 							fullWidth
 						/>
 						<Box>
-							<Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-								Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.
+							<Typography
+								variant="caption"
+								color="text.secondary"
+								display="block"
+								mb={0.5}
+							>
+								Beskriv vad uppgiften innebär och vad volontären behöver ta med
+								sig eller ha på sig.
 							</Typography>
 							<TextField
 								label="Beskrivning"
@@ -141,7 +147,6 @@ function NewRequestPage() {
 								fullWidth
 								multiline
 								minRows={5}
-								placeholder={"Vad jobbet innebär:\n\nVad du ska ta med/ha på dig:"}
 							/>
 						</Box>
 						<DatePicker
@@ -192,7 +197,6 @@ function NewRequestPage() {
 								value={contactName}
 								onChange={(e) => setContactName(e.target.value)}
 								fullWidth
-
 							/>
 							<TextField
 								label="Telefonnummer (valfritt)"
