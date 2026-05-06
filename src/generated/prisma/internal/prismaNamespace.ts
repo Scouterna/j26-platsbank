@@ -675,6 +675,8 @@ export const RequestScalarFieldEnum = {
   endTime: 'endTime',
   peopleNeeded: 'peopleNeeded',
   location: 'location',
+  contactName: 'contactName',
+  contactPhone: 'contactPhone',
   createdBy: 'createdBy',
   creatorName: 'creatorName',
   type: 'type',
@@ -703,6 +705,7 @@ export const RequestSignupScalarFieldEnum = {
   userId: 'userId',
   userName: 'userName',
   scoutGroup: 'scoutGroup',
+  phone: 'phone',
   comment: 'comment',
   claimToken: 'claimToken',
   createdAt: 'createdAt'

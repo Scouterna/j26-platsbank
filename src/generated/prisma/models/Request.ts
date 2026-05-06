@@ -42,6 +42,8 @@ export type RequestMinAggregateOutputType = {
   endTime: Date | null
   peopleNeeded: number | null
   location: string | null
+  contactName: string | null
+  contactPhone: string | null
   createdBy: string | null
   creatorName: string | null
   type: string | null
@@ -57,6 +59,8 @@ export type RequestMaxAggregateOutputType = {
   endTime: Date | null
   peopleNeeded: number | null
   location: string | null
+  contactName: string | null
+  contactPhone: string | null
   createdBy: string | null
   creatorName: string | null
   type: string | null
@@ -72,6 +76,8 @@ export type RequestCountAggregateOutputType = {
   endTime: number
   peopleNeeded: number
   location: number
+  contactName: number
+  contactPhone: number
   createdBy: number
   creatorName: number
   type: number
@@ -97,6 +103,8 @@ export type RequestMinAggregateInputType = {
   endTime?: true
   peopleNeeded?: true
   location?: true
+  contactName?: true
+  contactPhone?: true
   createdBy?: true
   creatorName?: true
   type?: true
@@ -112,6 +120,8 @@ export type RequestMaxAggregateInputType = {
   endTime?: true
   peopleNeeded?: true
   location?: true
+  contactName?: true
+  contactPhone?: true
   createdBy?: true
   creatorName?: true
   type?: true
@@ -127,6 +137,8 @@ export type RequestCountAggregateInputType = {
   endTime?: true
   peopleNeeded?: true
   location?: true
+  contactName?: true
+  contactPhone?: true
   createdBy?: true
   creatorName?: true
   type?: true
@@ -229,6 +241,8 @@ export type RequestGroupByOutputType = {
   endTime: Date
   peopleNeeded: number
   location: string | null
+  contactName: string | null
+  contactPhone: string | null
   createdBy: string
   creatorName: string
   type: string
@@ -267,6 +281,8 @@ export type RequestWhereInput = {
   endTime?: Prisma.DateTimeFilter<"Request"> | Date | string
   peopleNeeded?: Prisma.IntFilter<"Request"> | number
   location?: Prisma.StringNullableFilter<"Request"> | string | null
+  contactName?: Prisma.StringNullableFilter<"Request"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"Request"> | string | null
   createdBy?: Prisma.StringFilter<"Request"> | string
   creatorName?: Prisma.StringFilter<"Request"> | string
   type?: Prisma.StringFilter<"Request"> | string
@@ -284,6 +300,8 @@ export type RequestOrderByWithRelationInput = {
   endTime?: Prisma.SortOrder
   peopleNeeded?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactName?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -304,6 +322,8 @@ export type RequestWhereUniqueInput = Prisma.AtLeast<{
   endTime?: Prisma.DateTimeFilter<"Request"> | Date | string
   peopleNeeded?: Prisma.IntFilter<"Request"> | number
   location?: Prisma.StringNullableFilter<"Request"> | string | null
+  contactName?: Prisma.StringNullableFilter<"Request"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"Request"> | string | null
   createdBy?: Prisma.StringFilter<"Request"> | string
   creatorName?: Prisma.StringFilter<"Request"> | string
   type?: Prisma.StringFilter<"Request"> | string
@@ -321,6 +341,8 @@ export type RequestOrderByWithAggregationInput = {
   endTime?: Prisma.SortOrder
   peopleNeeded?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactName?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -344,6 +366,8 @@ export type RequestScalarWhereWithAggregatesInput = {
   endTime?: Prisma.DateTimeWithAggregatesFilter<"Request"> | Date | string
   peopleNeeded?: Prisma.IntWithAggregatesFilter<"Request"> | number
   location?: Prisma.StringNullableWithAggregatesFilter<"Request"> | string | null
+  contactName?: Prisma.StringNullableWithAggregatesFilter<"Request"> | string | null
+  contactPhone?: Prisma.StringNullableWithAggregatesFilter<"Request"> | string | null
   createdBy?: Prisma.StringWithAggregatesFilter<"Request"> | string
   creatorName?: Prisma.StringWithAggregatesFilter<"Request"> | string
   type?: Prisma.StringWithAggregatesFilter<"Request"> | string
@@ -359,6 +383,8 @@ export type RequestCreateInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -376,6 +402,8 @@ export type RequestUncheckedCreateInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -393,6 +421,8 @@ export type RequestUpdateInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -410,6 +440,8 @@ export type RequestUncheckedUpdateInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -427,6 +459,8 @@ export type RequestCreateManyInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -442,6 +476,8 @@ export type RequestUpdateManyMutationInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -457,6 +493,8 @@ export type RequestUncheckedUpdateManyInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -472,6 +510,8 @@ export type RequestCountOrderByAggregateInput = {
   endTime?: Prisma.SortOrder
   peopleNeeded?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  contactName?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -491,6 +531,8 @@ export type RequestMaxOrderByAggregateInput = {
   endTime?: Prisma.SortOrder
   peopleNeeded?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  contactName?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -506,6 +548,8 @@ export type RequestMinOrderByAggregateInput = {
   endTime?: Prisma.SortOrder
   peopleNeeded?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  contactName?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   creatorName?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -578,6 +622,8 @@ export type RequestCreateWithoutBlocksInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -594,6 +640,8 @@ export type RequestUncheckedCreateWithoutBlocksInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -626,6 +674,8 @@ export type RequestUpdateWithoutBlocksInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -642,6 +692,8 @@ export type RequestUncheckedUpdateWithoutBlocksInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -658,6 +710,8 @@ export type RequestCreateWithoutSignupsInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -674,6 +728,8 @@ export type RequestUncheckedCreateWithoutSignupsInput = {
   endTime: Date | string
   peopleNeeded: number
   location?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
   createdBy: string
   creatorName: string
   type?: string
@@ -706,6 +762,8 @@ export type RequestUpdateWithoutSignupsInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -722,6 +780,8 @@ export type RequestUncheckedUpdateWithoutSignupsInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peopleNeeded?: Prisma.IntFieldUpdateOperationsInput | number
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   creatorName?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -778,6 +838,8 @@ export type RequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   endTime?: boolean
   peopleNeeded?: boolean
   location?: boolean
+  contactName?: boolean
+  contactPhone?: boolean
   createdBy?: boolean
   creatorName?: boolean
   type?: boolean
@@ -796,6 +858,8 @@ export type RequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   endTime?: boolean
   peopleNeeded?: boolean
   location?: boolean
+  contactName?: boolean
+  contactPhone?: boolean
   createdBy?: boolean
   creatorName?: boolean
   type?: boolean
@@ -811,6 +875,8 @@ export type RequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   endTime?: boolean
   peopleNeeded?: boolean
   location?: boolean
+  contactName?: boolean
+  contactPhone?: boolean
   createdBy?: boolean
   creatorName?: boolean
   type?: boolean
@@ -826,6 +892,8 @@ export type RequestSelectScalar = {
   endTime?: boolean
   peopleNeeded?: boolean
   location?: boolean
+  contactName?: boolean
+  contactPhone?: boolean
   createdBy?: boolean
   creatorName?: boolean
   type?: boolean
@@ -833,7 +901,7 @@ export type RequestSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "startTime" | "endTime" | "peopleNeeded" | "location" | "createdBy" | "creatorName" | "type" | "createdAt" | "updatedAt", ExtArgs["result"]["request"]>
+export type RequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "startTime" | "endTime" | "peopleNeeded" | "location" | "contactName" | "contactPhone" | "createdBy" | "creatorName" | "type" | "createdAt" | "updatedAt", ExtArgs["result"]["request"]>
 export type RequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   signups?: boolean | Prisma.Request$signupsArgs<ExtArgs>
   blocks?: boolean | Prisma.Request$blocksArgs<ExtArgs>
@@ -856,6 +924,8 @@ export type $RequestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     endTime: Date
     peopleNeeded: number
     location: string | null
+    contactName: string | null
+    contactPhone: string | null
     createdBy: string
     creatorName: string
     type: string
@@ -1293,6 +1363,8 @@ export interface RequestFieldRefs {
   readonly endTime: Prisma.FieldRef<"Request", 'DateTime'>
   readonly peopleNeeded: Prisma.FieldRef<"Request", 'Int'>
   readonly location: Prisma.FieldRef<"Request", 'String'>
+  readonly contactName: Prisma.FieldRef<"Request", 'String'>
+  readonly contactPhone: Prisma.FieldRef<"Request", 'String'>
   readonly createdBy: Prisma.FieldRef<"Request", 'String'>
   readonly creatorName: Prisma.FieldRef<"Request", 'String'>
   readonly type: Prisma.FieldRef<"Request", 'String'>

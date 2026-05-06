@@ -30,6 +30,7 @@ export type RequestSignupMinAggregateOutputType = {
   userId: string | null
   userName: string | null
   scoutGroup: string | null
+  phone: string | null
   comment: string | null
   claimToken: string | null
   createdAt: Date | null
@@ -41,6 +42,7 @@ export type RequestSignupMaxAggregateOutputType = {
   userId: string | null
   userName: string | null
   scoutGroup: string | null
+  phone: string | null
   comment: string | null
   claimToken: string | null
   createdAt: Date | null
@@ -52,6 +54,7 @@ export type RequestSignupCountAggregateOutputType = {
   userId: number
   userName: number
   scoutGroup: number
+  phone: number
   comment: number
   claimToken: number
   createdAt: number
@@ -65,6 +68,7 @@ export type RequestSignupMinAggregateInputType = {
   userId?: true
   userName?: true
   scoutGroup?: true
+  phone?: true
   comment?: true
   claimToken?: true
   createdAt?: true
@@ -76,6 +80,7 @@ export type RequestSignupMaxAggregateInputType = {
   userId?: true
   userName?: true
   scoutGroup?: true
+  phone?: true
   comment?: true
   claimToken?: true
   createdAt?: true
@@ -87,6 +92,7 @@ export type RequestSignupCountAggregateInputType = {
   userId?: true
   userName?: true
   scoutGroup?: true
+  phone?: true
   comment?: true
   claimToken?: true
   createdAt?: true
@@ -171,6 +177,7 @@ export type RequestSignupGroupByOutputType = {
   userId: string
   userName: string
   scoutGroup: string | null
+  phone: string | null
   comment: string | null
   claimToken: string | null
   createdAt: Date
@@ -203,6 +210,7 @@ export type RequestSignupWhereInput = {
   userId?: Prisma.StringFilter<"RequestSignup"> | string
   userName?: Prisma.StringFilter<"RequestSignup"> | string
   scoutGroup?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
+  phone?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   comment?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   claimToken?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequestSignup"> | Date | string
@@ -215,6 +223,7 @@ export type RequestSignupOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   userName?: Prisma.SortOrder
   scoutGroup?: Prisma.SortOrderInput | Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   claimToken?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -232,6 +241,7 @@ export type RequestSignupWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"RequestSignup"> | string
   userName?: Prisma.StringFilter<"RequestSignup"> | string
   scoutGroup?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
+  phone?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   comment?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequestSignup"> | Date | string
   request?: Prisma.XOR<Prisma.RequestScalarRelationFilter, Prisma.RequestWhereInput>
@@ -243,6 +253,7 @@ export type RequestSignupOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   userName?: Prisma.SortOrder
   scoutGroup?: Prisma.SortOrderInput | Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   claimToken?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -260,6 +271,7 @@ export type RequestSignupScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"RequestSignup"> | string
   userName?: Prisma.StringWithAggregatesFilter<"RequestSignup"> | string
   scoutGroup?: Prisma.StringNullableWithAggregatesFilter<"RequestSignup"> | string | null
+  phone?: Prisma.StringNullableWithAggregatesFilter<"RequestSignup"> | string | null
   comment?: Prisma.StringNullableWithAggregatesFilter<"RequestSignup"> | string | null
   claimToken?: Prisma.StringNullableWithAggregatesFilter<"RequestSignup"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RequestSignup"> | Date | string
@@ -270,6 +282,7 @@ export type RequestSignupCreateInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -282,6 +295,7 @@ export type RequestSignupUncheckedCreateInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -292,6 +306,7 @@ export type RequestSignupUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -304,6 +319,7 @@ export type RequestSignupUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -315,6 +331,7 @@ export type RequestSignupCreateManyInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -325,6 +342,7 @@ export type RequestSignupUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -336,6 +354,7 @@ export type RequestSignupUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,6 +381,7 @@ export type RequestSignupCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   userName?: Prisma.SortOrder
   scoutGroup?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   comment?: Prisma.SortOrder
   claimToken?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -373,6 +393,7 @@ export type RequestSignupMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   userName?: Prisma.SortOrder
   scoutGroup?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   comment?: Prisma.SortOrder
   claimToken?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -384,6 +405,7 @@ export type RequestSignupMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   userName?: Prisma.SortOrder
   scoutGroup?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   comment?: Prisma.SortOrder
   claimToken?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -436,6 +458,7 @@ export type RequestSignupCreateWithoutRequestInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -446,6 +469,7 @@ export type RequestSignupUncheckedCreateWithoutRequestInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -486,6 +510,7 @@ export type RequestSignupScalarWhereInput = {
   userId?: Prisma.StringFilter<"RequestSignup"> | string
   userName?: Prisma.StringFilter<"RequestSignup"> | string
   scoutGroup?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
+  phone?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   comment?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   claimToken?: Prisma.StringNullableFilter<"RequestSignup"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequestSignup"> | Date | string
@@ -496,6 +521,7 @@ export type RequestSignupCreateManyRequestInput = {
   userId: string
   userName: string
   scoutGroup?: string | null
+  phone?: string | null
   comment?: string | null
   claimToken?: string | null
   createdAt?: Date | string
@@ -506,6 +532,7 @@ export type RequestSignupUpdateWithoutRequestInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -516,6 +543,7 @@ export type RequestSignupUncheckedUpdateWithoutRequestInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -526,6 +554,7 @@ export type RequestSignupUncheckedUpdateManyWithoutRequestInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userName?: Prisma.StringFieldUpdateOperationsInput | string
   scoutGroup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   claimToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -539,6 +568,7 @@ export type RequestSignupSelect<ExtArgs extends runtime.Types.Extensions.Interna
   userId?: boolean
   userName?: boolean
   scoutGroup?: boolean
+  phone?: boolean
   comment?: boolean
   claimToken?: boolean
   createdAt?: boolean
@@ -551,6 +581,7 @@ export type RequestSignupSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   userId?: boolean
   userName?: boolean
   scoutGroup?: boolean
+  phone?: boolean
   comment?: boolean
   claimToken?: boolean
   createdAt?: boolean
@@ -563,6 +594,7 @@ export type RequestSignupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   userId?: boolean
   userName?: boolean
   scoutGroup?: boolean
+  phone?: boolean
   comment?: boolean
   claimToken?: boolean
   createdAt?: boolean
@@ -575,12 +607,13 @@ export type RequestSignupSelectScalar = {
   userId?: boolean
   userName?: boolean
   scoutGroup?: boolean
+  phone?: boolean
   comment?: boolean
   claimToken?: boolean
   createdAt?: boolean
 }
 
-export type RequestSignupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requestId" | "userId" | "userName" | "scoutGroup" | "comment" | "claimToken" | "createdAt", ExtArgs["result"]["requestSignup"]>
+export type RequestSignupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requestId" | "userId" | "userName" | "scoutGroup" | "phone" | "comment" | "claimToken" | "createdAt", ExtArgs["result"]["requestSignup"]>
 export type RequestSignupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   request?: boolean | Prisma.RequestDefaultArgs<ExtArgs>
 }
@@ -602,6 +635,7 @@ export type $RequestSignupPayload<ExtArgs extends runtime.Types.Extensions.Inter
     userId: string
     userName: string
     scoutGroup: string | null
+    phone: string | null
     comment: string | null
     claimToken: string | null
     createdAt: Date
@@ -1034,6 +1068,7 @@ export interface RequestSignupFieldRefs {
   readonly userId: Prisma.FieldRef<"RequestSignup", 'String'>
   readonly userName: Prisma.FieldRef<"RequestSignup", 'String'>
   readonly scoutGroup: Prisma.FieldRef<"RequestSignup", 'String'>
+  readonly phone: Prisma.FieldRef<"RequestSignup", 'String'>
   readonly comment: Prisma.FieldRef<"RequestSignup", 'String'>
   readonly claimToken: Prisma.FieldRef<"RequestSignup", 'String'>
   readonly createdAt: Prisma.FieldRef<"RequestSignup", 'DateTime'>

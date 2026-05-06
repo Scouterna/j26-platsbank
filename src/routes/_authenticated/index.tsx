@@ -7,6 +7,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
+import PhoneIcon from "@mui/icons-material/Phone";
 import UndoIcon from "@mui/icons-material/Undo";
 import {
 	Alert,
@@ -38,7 +39,7 @@ import {
 	useRouter,
 	useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import {
@@ -54,6 +55,7 @@ import {
 } from "#/server/requests";
 
 const CLAIM_TOKENS_KEY = "j26-claim-tokens";
+const INFO_HIDDEN_KEY = "j26-platsbank-info-hidden";
 
 interface GuestSignup {
 	token: string;
@@ -74,7 +76,9 @@ function saveStoredSignups(signups: GuestSignup[]) {
 }
 
 export const Route = createFileRoute("/_authenticated/")({
-	loader: () => getRequests(),
+	// SSR pass cannot read localStorage, so guest userIds are filled in by a
+	// client-side effect in RequestsPage that re-fetches with them.
+	loader: () => getRequests({ data: {} }),
 	component: RequestsPage,
 });
 
@@ -138,7 +142,7 @@ function groupByDay(items: Request[]) {
 type KickTarget = { requestId: string; userId: string; userName: string };
 
 function RequestsPage() {
-	const requests = Route.useLoaderData();
+	const loaderRequests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
 	const isRouterLoading = useRouterState({
@@ -180,6 +184,11 @@ function RequestsPage() {
 		return () => clearInterval(id);
 	}, [router]);
 
+	const [infoOpen, setInfoOpen] = useState(
+		() =>
+			typeof window === "undefined" ||
+			!localStorage.getItem(INFO_HIDDEN_KEY),
+	);
 	const [tab, setTab] = useState<"others" | "mine" | "signed-up">("others");
 	const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 	const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
@@ -191,13 +200,50 @@ function RequestsPage() {
 	);
 	const [signupDialogId, setSignupDialogId] = useState<string | null>(null);
 	const [signupComment, setSignupComment] = useState("");
+	const [signupPhone, setSignupPhone] = useState("");
 	const [guestName, setGuestName] = useState("");
 	const [guestScoutGroup, setGuestScoutGroup] = useState("");
 	const [guestSignups, setGuestSignups] = useState<GuestSignup[]>(() =>
 		typeof window !== "undefined" ? getStoredSignups() : [],
 	);
+	const [pastCollapsed, setPastCollapsed] = useState(true);
 	const [kickTarget, setKickTarget] = useState<KickTarget | null>(null);
 	const [kickReason, setKickReason] = useState("");
+	const [guestMyBlocks, setGuestMyBlocks] = useState<Map<string, string>>(
+		() => new Map(),
+	);
+
+	// For unauthenticated guests, refetch with the locally-stored guest userIds
+	// so myBlock (and thus the rejection reason) gets populated. The SSR loader
+	// can't see localStorage so it always returns null myBlock for guests.
+	useEffect(() => {
+		if (user || guestSignups.length === 0) {
+			setGuestMyBlocks((prev) => (prev.size === 0 ? prev : new Map()));
+			return;
+		}
+		let cancelled = false;
+		const guestUserIds = guestSignups.map((g) => g.userId);
+		getRequests({ data: { guestUserIds } })
+			.then((data) => {
+				if (cancelled) return;
+				const next = new Map<string, string>();
+				for (const r of data) {
+					if (r.myBlock) next.set(r.id, r.myBlock);
+				}
+				setGuestMyBlocks(next);
+			})
+			.catch(() => {});
+		return () => {
+			cancelled = true;
+		};
+	}, [user, guestSignups]);
+
+	const requests = useMemo(() => {
+		if (!loaderRequests || guestMyBlocks.size === 0) return loaderRequests;
+		return loaderRequests.map((r) =>
+			r.myBlock ? r : { ...r, myBlock: guestMyBlocks.get(r.id) ?? null },
+		);
+	}, [loaderRequests, guestMyBlocks]);
 
 	if (!requests) return null;
 
@@ -216,20 +262,35 @@ function RequestsPage() {
 								: r.createdBy !== user.sub,
 						)
 					: requests;
-	const chronological = [...filtered].sort(
-		(a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+	const now = new Date();
+	const currentFiltered = filtered.filter(
+		(r) => new Date(r.endTime) >= now,
 	);
-	const grouped = groupByDay(chronological).map((group) => ({
-		...group,
-		items: [...group.items].sort((a, b) => {
+	const pastFiltered = filtered.filter((r) => new Date(r.endTime) < now);
+
+	const sortItems = (items: Request[]) =>
+		[...items].sort((a, b) => {
 			if (user) {
 				const aUp = a.signups.some((s) => s.userId === user.sub) ? 0 : 1;
 				const bUp = b.signups.some((s) => s.userId === user.sub) ? 0 : 1;
 				if (aUp !== bUp) return aUp - bUp;
 			}
 			return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-		}),
-	}));
+		});
+
+	const grouped = groupByDay(
+		[...currentFiltered].sort(
+			(a, b) =>
+				new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+		),
+	).map((group) => ({ ...group, items: sortItems(group.items) }));
+
+	const pastGrouped = groupByDay(
+		[...pastFiltered].sort(
+			(a, b) =>
+				new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+		),
+	).map((group) => ({ ...group, items: sortItems(group.items) }));
 
 	async function handleDeleteConfirm() {
 		if (!pendingDeleteId) return;
@@ -245,6 +306,7 @@ function RequestsPage() {
 			await signUpForRequest({
 				data: {
 					requestId: signupDialogId,
+					phone: signupPhone || undefined,
 					comment: signupComment || undefined,
 				},
 			});
@@ -254,6 +316,7 @@ function RequestsPage() {
 					requestId: signupDialogId,
 					name: guestName,
 					scoutGroup: guestScoutGroup,
+					phone: signupPhone || undefined,
 					comment: signupComment || undefined,
 				},
 			});
@@ -266,6 +329,7 @@ function RequestsPage() {
 		}
 		setSignupDialogId(null);
 		setSignupComment("");
+		setSignupPhone("");
 		setGuestName("");
 		setGuestScoutGroup("");
 		router.invalidate();
@@ -306,12 +370,36 @@ function RequestsPage() {
 
 	return (
 		<Box>
-			<Alert severity="info" variant="outlined">
-				I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
-				eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall
-				kan lägerledningen komma att be specifika byar eller kårer att skriva
-				upp sig på vissa pass.
-			</Alert>
+			<Collapse in={infoOpen}>
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2 }}
+					onClose={() => {
+						localStorage.setItem(INFO_HIDDEN_KEY, "1");
+						setInfoOpen(false);
+					}}
+				>
+					I platsbanken kan funktionärer annonsera behov av hjälp. Du som
+					ledare eller funktionär kan anmäla dig för att hjälpa till. I
+					särskilda fall kan lägerledningen komma att be specifika byar eller
+					kårer att skriva upp sig på vissa pass.
+				</Alert>
+			</Collapse>
+			{!infoOpen && (
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2, cursor: "pointer", py: 0.5 }}
+					onClick={() => {
+						localStorage.removeItem(INFO_HIDDEN_KEY);
+						setInfoOpen(true);
+					}}
+					action={<ExpandMoreIcon fontSize="small" />}
+				>
+					Om platsbanken
+				</Alert>
+			)}
 
 			<Box
 				display="flex"
@@ -362,6 +450,11 @@ function RequestsPage() {
 				</Typography>
 			) : (
 				<Stack spacing={4}>
+					{grouped.length === 0 && (
+						<Typography color="text.secondary">
+							Inga kommande förfrågningar.
+						</Typography>
+					)}
 					{grouped.map(({ label, items }) => {
 						const collapsed = collapsedDays.has(label);
 						const toggle = () =>
@@ -542,6 +635,114 @@ function RequestsPage() {
 							</Box>
 						);
 					})}
+					{pastGrouped.length > 0 && (
+						<Box>
+							<Box
+								display="flex"
+								alignItems="center"
+								onClick={() => setPastCollapsed((v) => !v)}
+								sx={{ cursor: "pointer", userSelect: "none", mb: pastCollapsed ? 0 : 1 }}
+							>
+								<Typography
+									variant="h6"
+									sx={{ color: "text.disabled", flex: 1 }}
+								>
+									Tidigare
+								</Typography>
+								<IconButton size="small" sx={{ color: "text.disabled" }}>
+									{pastCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+								</IconButton>
+							</Box>
+							<Collapse in={!pastCollapsed}>
+								<Stack spacing={4}>
+									{pastGrouped.map(({ label, items }) => {
+										const collapsed = collapsedDays.has(`past-${label}`);
+										const toggle = () =>
+											setCollapsedDays((prev) => {
+												const next = new Set(prev);
+												const key = `past-${label}`;
+												if (next.has(key)) next.delete(key);
+												else next.add(key);
+												return next;
+											});
+										return (
+											<Box key={`past-${label}`}>
+												<Box
+													display="flex"
+													alignItems="center"
+													onClick={toggle}
+													sx={{ cursor: "pointer", userSelect: "none", mb: collapsed ? 0 : 1 }}
+												>
+													<Typography
+														variant="h6"
+														sx={{ textTransform: "capitalize", color: "text.disabled", flex: 1 }}
+													>
+														{label}
+													</Typography>
+													<IconButton size="small" sx={{ color: "text.disabled" }}>
+														{collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+													</IconButton>
+												</Box>
+												<Collapse in={!collapsed}>
+													<Stack spacing={2}>
+														{items.map((req) => {
+															const isSignedUp = user
+																? req.signups.some((s) => s.userId === user.sub)
+																: req.signups.some((s) =>
+																		guestSignups.some(
+																			(g) =>
+																				g.userId === s.userId &&
+																				g.requestId === req.id,
+																		),
+																	);
+															const isFull =
+																req.signups.length >= req.peopleNeeded;
+															return (
+																<Card
+																	key={req.id}
+																	variant="outlined"
+																	onClick={() => setSelectedRequestId(req.id)}
+																	sx={{
+																		cursor: "pointer",
+																		opacity: 0.6,
+																		"&:hover": { borderColor: "primary.light" },
+																		...(isSignedUp ? { borderColor: "primary.main" } : {}),
+																	}}
+																>
+																	<CardContent sx={{ "&:last-child": { pb: 2 } }}>
+																		<Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+																			<Box flex={1} minWidth={0}>
+																				<Typography variant="subtitle1" fontWeight={500} noWrap>
+																					{req.title}
+																				</Typography>
+																				<Typography variant="body2" color="text.secondary">
+																					{formatTime(req.startTime)}–{formatTime(req.endTime)}
+																				</Typography>
+																			</Box>
+																			<Box display="flex" alignItems="center" gap={0.5} flexShrink={0}>
+																				<Chip
+																					icon={<PeopleIcon />}
+																					label={`${req.signups.length}/${req.peopleNeeded}`}
+																					size="small"
+																					variant="outlined"
+																					color={isFull ? "success" : "default"}
+																				/>
+																				<ChevronRightIcon fontSize="small" sx={{ color: "text.disabled" }} />
+																			</Box>
+																		</Box>
+																	</CardContent>
+																</Card>
+															);
+														})}
+													</Stack>
+												</Collapse>
+											</Box>
+										);
+									})}
+								</Stack>
+							</Collapse>
+						</Box>
+					)}
 				</Stack>
 			)}
 			{/* Detail drawer */}
@@ -623,6 +824,34 @@ function RequestsPage() {
 										)}
 									</Box>
 
+									{(req.contactName || req.contactPhone) && (
+										<Box>
+											<Typography
+												variant="overline"
+												color="text.secondary"
+												display="block"
+											>
+												Kontaktperson
+											</Typography>
+											{req.contactName && (
+												<Typography variant="body2">{req.contactName}</Typography>
+											)}
+											{req.contactPhone && (
+												<Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
+													<PhoneIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+													<Typography
+														variant="body2"
+														component="a"
+														href={`tel:${req.contactPhone}`}
+														sx={{ color: "inherit", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+													>
+														{req.contactPhone}
+													</Typography>
+												</Box>
+											)}
+										</Box>
+									)}
+
 									<Typography variant="caption" color="text.secondary">
 										Skapad av {req.creatorName}
 									</Typography>
@@ -657,6 +886,19 @@ function RequestsPage() {
 																	display="block"
 																>
 																	{s.scoutGroup}
+																</Typography>
+															)}
+															{s.phone && (
+																<Typography
+																	variant="caption"
+																	color="text.secondary"
+																	display="block"
+																	component="a"
+																	href={`tel:${s.phone}`}
+																	sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+																>
+																	<PhoneIcon sx={{ fontSize: 10, mr: 0.5, verticalAlign: "middle" }} />
+																	{s.phone}
 																</Typography>
 															)}
 															{s.comment && (
@@ -823,6 +1065,13 @@ function RequestsPage() {
 								/>
 							</>
 						)}
+						<TextField
+							label="Telefonnummer (valfritt)"
+							fullWidth
+							value={signupPhone}
+							onChange={(e) => setSignupPhone(e.target.value)}
+							helperText="Delas endast med arrangören för att underlätta kommunikation."
+						/>
 						<TextField
 							label="Kommentar (valfri)"
 							fullWidth
