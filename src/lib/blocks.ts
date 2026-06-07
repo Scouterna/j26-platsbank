@@ -7,19 +7,16 @@ export interface BlockLike {
  * Resolves the current user's RequestBlock reason from a list of blocks.
  *
  * - For authenticated users (userSub != null), looks up the block by userSub.
- * - For unauthenticated guest users, looks up the block by any of the
- *   guestUserIds the client has stored locally — these are the random UUIDs
- *   created when a guest signed up via guestSignUpForRequest.
+ * - The guestUserIds path is retained for backwards compatibility: it resolved
+ *   blocks for anonymous guest signups, which are no longer created. Callers
+ *   now always pass an empty list.
  *
  * Returns null when no matching block exists.
  */
 export function resolveMyBlock(
 	blocks: readonly BlockLike[],
 	userSub: string | null,
-	guestUserIds: readonly string[],
 ): string | null {
-	if (userSub) {
-		return blocks.find((b) => b.userId === userSub)?.reason ?? null;
-	}
-	return blocks.find((b) => guestUserIds.includes(b.userId))?.reason ?? null;
+	if (!userSub) return null;
+	return blocks.find((b) => b.userId === userSub)?.reason ?? null;
 }
