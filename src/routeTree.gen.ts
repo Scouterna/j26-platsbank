@@ -9,18 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ApiConfigRouteImport } from './routes/api-config'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiAppConfigRouteImport } from './routes/api/app-config'
 import { Route as AuthenticatedRequestsNewRouteImport } from './routes/_authenticated/requests/new'
 import { Route as AuthenticatedRequestsRequestIdEditRouteImport } from './routes/_authenticated/requests/$requestId.edit'
 
-const ApiConfigRoute = ApiConfigRouteImport.update({
-  id: '/api-config',
-  path: '/api-config',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -34,6 +29,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiAppConfigRoute = ApiAppConfigRouteImport.update({
+  id: '/api/app-config',
+  path: '/api/app-config',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRequestsNewRoute =
   AuthenticatedRequestsNewRouteImport.update({
@@ -51,13 +51,13 @@ const AuthenticatedRequestsRequestIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/about': typeof AboutRoute
-  '/api-config': typeof ApiConfigRoute
+  '/api/app-config': typeof ApiAppConfigRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
-  '/api-config': typeof ApiConfigRoute
+  '/api/app-config': typeof ApiAppConfigRoute
   '/': typeof AuthenticatedIndexRoute
   '/requests/new': typeof AuthenticatedRequestsNewRoute
   '/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
@@ -66,7 +66,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
-  '/api-config': typeof ApiConfigRoute
+  '/api/app-config': typeof ApiAppConfigRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/requests/new': typeof AuthenticatedRequestsNewRoute
   '/_authenticated/requests/$requestId/edit': typeof AuthenticatedRequestsRequestIdEditRoute
@@ -76,13 +76,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/api-config'
+    | '/api/app-config'
     | '/requests/new'
     | '/requests/$requestId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
-    | '/api-config'
+    | '/api/app-config'
     | '/'
     | '/requests/new'
     | '/requests/$requestId/edit'
@@ -90,7 +90,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/about'
-    | '/api-config'
+    | '/api/app-config'
     | '/_authenticated/'
     | '/_authenticated/requests/new'
     | '/_authenticated/requests/$requestId/edit'
@@ -99,18 +99,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
-  ApiConfigRoute: typeof ApiConfigRoute
+  ApiAppConfigRoute: typeof ApiAppConfigRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/api-config': {
-      id: '/api-config'
-      path: '/api-config'
-      fullPath: '/api-config'
-      preLoaderRoute: typeof ApiConfigRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -131,6 +124,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/app-config': {
+      id: '/api/app-config'
+      path: '/api/app-config'
+      fullPath: '/api/app-config'
+      preLoaderRoute: typeof ApiAppConfigRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/requests/new': {
       id: '/_authenticated/requests/new'
@@ -169,7 +169,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
-  ApiConfigRoute: ApiConfigRoute,
+  ApiAppConfigRoute: ApiAppConfigRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

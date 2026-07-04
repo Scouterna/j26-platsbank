@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getCookie } from "@tanstack/react-start/server";
 import { verifyAndGetUser } from "#/lib/auth";
 
-export const Route = createFileRoute("/api-config")({
+export const Route = createFileRoute("/api/app-config")({
 	server: {
 		handlers: {
 			GET: async () => {
