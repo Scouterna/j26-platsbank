@@ -8,6 +8,14 @@ export const Route = createFileRoute("/api/app-config")({
 			GET: async () => {
 				const token = getCookie("j26-auth_access-token");
 				const user = token ? await verifyAndGetUser(token) : null;
+				console.log(
+					"[api/app-config] token present:",
+					!!token,
+					"user resolved:",
+					!!user,
+					"roles:",
+					user?.roles,
+				);
 
 				if (!user || user.roles.length === 0) {
 					return new Response("Unauthorized", { status: 401 });
