@@ -5,7 +5,6 @@ import { type AppUser, verifyAndGetUser } from "#/lib/auth";
 export const getUser = createServerFn({ method: "GET" }).handler(
 	async (): Promise<AppUser | null> => {
 		const token = getCookie("j26-auth_access-token");
-		console.log("[auth] cookie token present:", !!token);
 		if (!token) return null;
 		return verifyAndGetUser(token);
 	},

@@ -1,10 +1,31 @@
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from "jose";
 
-const ISSUER = "https://dev.id.scouterna.se/realms/jamboree26";
+const DISCOVERY_URL = process.env.KEYCLOAK_DISCOVERY_URL!;
 
-const JWKS = createRemoteJWKSet(
-	new URL(`${ISSUER}/protocol/openid-connect/certs`),
-);
+interface OpenIdConfiguration {
+	issuer: string;
+	jwks_uri: string;
+}
+
+let jwksConfigPromise:
+	| Promise<{ issuer: string; jwks: ReturnType<typeof createRemoteJWKSet> }>
+	| undefined;
+
+function getJwksConfig() {
+	if (!jwksConfigPromise) {
+		jwksConfigPromise = fetch(DISCOVERY_URL)
+			.then((res) => res.json() as Promise<OpenIdConfiguration>)
+			.then((config) => ({
+				issuer: config.issuer,
+				jwks: createRemoteJWKSet(new URL(config.jwks_uri)),
+			}))
+			.catch((err) => {
+				jwksConfigPromise = undefined;
+				throw err;
+			});
+	}
+	return jwksConfigPromise;
+}
 
 interface KeycloakPayload extends JWTPayload {
 	resource_access?: {
@@ -29,8 +50,9 @@ export interface AppUser {
 
 export async function verifyAndGetUser(token: string): Promise<AppUser | null> {
 	try {
-		const { payload } = await jwtVerify<KeycloakPayload>(token, JWKS, {
-			issuer: ISSUER,
+		const { issuer, jwks } = await getJwksConfig();
+		const { payload } = await jwtVerify<KeycloakPayload>(token, jwks, {
+			issuer,
 		});
 
 		return {
