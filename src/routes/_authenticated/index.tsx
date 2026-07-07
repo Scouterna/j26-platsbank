@@ -7,6 +7,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import PhoneIcon from "@mui/icons-material/Phone";
 import UndoIcon from "@mui/icons-material/Undo";
 import {
@@ -39,19 +40,23 @@ import {
 	useRouter,
 	useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+	canManageRequest,
+	getCapabilities,
+	normalizeRequestType,
+} from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import {
+	bookOnBehalf,
 	claimGuestSignups,
 	deleteRequest,
 	getRequests,
-	guestSignUpForRequest,
 	kickFromRequest,
 	signUpForRequest,
 	unblockFromRequest,
 	withdrawFromRequest,
-	withdrawGuestFromRequest,
 } from "#/server/requests";
 
 const CLAIM_TOKENS_KEY = "j26-claim-tokens";
@@ -76,9 +81,7 @@ function saveStoredSignups(signups: GuestSignup[]) {
 }
 
 export const Route = createFileRoute("/_authenticated/")({
-	// SSR pass cannot read localStorage, so guest userIds are filled in by a
-	// client-side effect in RequestsPage that re-fetches with them.
-	loader: () => getRequests({ data: {} }),
+	loader: () => getRequests(),
 	component: RequestsPage,
 });
 
@@ -142,16 +145,16 @@ function groupByDay(items: Request[]) {
 type KickTarget = { requestId: string; userId: string; userName: string };
 
 function RequestsPage() {
-	const loaderRequests = Route.useLoaderData();
+	const requests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
 	const isRouterLoading = useRouterState({
 		select: (s) => s.status !== "idle",
 	});
 
-	const canCreate = user?.roles.includes("requests:create") ?? false;
-	const isAdmin = user?.roles.includes("admin") ?? false;
-	const showTypeLabel = user?.roles.includes("requests:staff:book") ?? false;
+	const caps = getCapabilities(user?.roles ?? []);
+	const canCreate = caps.canCreateAny;
+	const showTypeLabel = caps.visibleTypes.length > 1;
 
 	const handleRefresh = useCallback(() => router.invalidate(), [router]);
 
@@ -168,13 +171,14 @@ function RequestsPage() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on user identity only
 	useEffect(() => {
+		// Migrate any pre-existing guest signups stored locally onto the now
+		// logged-in account. New guest signups are no longer created.
 		if (!user) return;
 		const stored = getStoredSignups();
 		if (stored.length === 0) return;
 		const tokens = stored.map((s) => s.token);
 		claimGuestSignups({ data: { tokens } }).then(({ claimed }) => {
 			saveStoredSignups([]);
-			setGuestSignups([]);
 			if (claimed > 0) router.invalidate();
 		});
 	}, [user?.sub]);
@@ -186,8 +190,7 @@ function RequestsPage() {
 
 	const [infoOpen, setInfoOpen] = useState(
 		() =>
-			typeof window === "undefined" ||
-			!localStorage.getItem(INFO_HIDDEN_KEY),
+			typeof window === "undefined" || !localStorage.getItem(INFO_HIDDEN_KEY),
 	);
 	const [tab, setTab] = useState<"others" | "mine" | "signed-up">("others");
 	const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
@@ -201,80 +204,99 @@ function RequestsPage() {
 	const [signupDialogId, setSignupDialogId] = useState<string | null>(null);
 	const [signupComment, setSignupComment] = useState("");
 	const [signupPhone, setSignupPhone] = useState("");
-	const [guestName, setGuestName] = useState("");
-	const [guestScoutGroup, setGuestScoutGroup] = useState("");
-	const [guestSignups, setGuestSignups] = useState<GuestSignup[]>(() =>
-		typeof window !== "undefined" ? getStoredSignups() : [],
-	);
 	const [pastCollapsed, setPastCollapsed] = useState(true);
 	const [kickTarget, setKickTarget] = useState<KickTarget | null>(null);
 	const [kickReason, setKickReason] = useState("");
-	const [guestMyBlocks, setGuestMyBlocks] = useState<Map<string, string>>(
-		() => new Map(),
+	const [onBehalfRequestId, setOnBehalfRequestId] = useState<string | null>(
+		null,
 	);
-
-	// For unauthenticated guests, refetch with the locally-stored guest userIds
-	// so myBlock (and thus the rejection reason) gets populated. The SSR loader
-	// can't see localStorage so it always returns null myBlock for guests.
-	useEffect(() => {
-		if (user || guestSignups.length === 0) {
-			setGuestMyBlocks((prev) => (prev.size === 0 ? prev : new Map()));
-			return;
-		}
-		let cancelled = false;
-		const guestUserIds = guestSignups.map((g) => g.userId);
-		getRequests({ data: { guestUserIds } })
-			.then((data) => {
-				if (cancelled) return;
-				const next = new Map<string, string>();
-				for (const r of data) {
-					if (r.myBlock) next.set(r.id, r.myBlock);
-				}
-				setGuestMyBlocks(next);
-			})
-			.catch(() => {});
-		return () => {
-			cancelled = true;
-		};
-	}, [user, guestSignups]);
-
-	const requests = useMemo(() => {
-		if (!loaderRequests || guestMyBlocks.size === 0) return loaderRequests;
-		return loaderRequests.map((r) =>
-			r.myBlock ? r : { ...r, myBlock: guestMyBlocks.get(r.id) ?? null },
-		);
-	}, [loaderRequests, guestMyBlocks]);
+	const [onBehalfName, setOnBehalfName] = useState("");
+	const [onBehalfScoutGroup, setOnBehalfScoutGroup] = useState("");
+	const [onBehalfPhone, setOnBehalfPhone] = useState("");
+	const [onBehalfComment, setOnBehalfComment] = useState("");
 
 	if (!requests) return null;
+
+	const infoBanner = (
+		<>
+			<Collapse in={infoOpen}>
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2 }}
+					onClose={() => {
+						localStorage.setItem(INFO_HIDDEN_KEY, "1");
+						setInfoOpen(false);
+					}}
+				>
+					I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
+					eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall
+					kan lägerledningen komma att be specifika byar eller kårer att skriva
+					upp sig på vissa pass.
+				</Alert>
+			</Collapse>
+			{!infoOpen && (
+				<Alert
+					severity="info"
+					variant="outlined"
+					sx={{ mb: 2, cursor: "pointer", py: 0.5 }}
+					onClick={() => {
+						localStorage.removeItem(INFO_HIDDEN_KEY);
+						setInfoOpen(true);
+					}}
+					action={<ExpandMoreIcon fontSize="small" />}
+				>
+					Om platsbanken
+				</Alert>
+			)}
+		</>
+	);
+
+	if (!user) {
+		return (
+			<Box>
+				{infoBanner}
+				<Typography color="text.secondary">
+					Logga in för att se förfrågningar.
+				</Typography>
+			</Box>
+		);
+	}
+
+	if (!caps.canSeeAny) {
+		return (
+			<Box>
+				{infoBanner}
+				<Typography color="text.secondary">
+					Du har inte behörighet att se några förfrågningar. Kontakta
+					lägerledningen om du tror att detta är fel.
+				</Typography>
+			</Box>
+		);
+	}
 
 	const selectedRequest =
 		requests.find((r) => r.id === selectedRequestId) ?? null;
 
 	const filtered =
-		tab === "signed-up" && user
+		tab === "signed-up"
 			? requests.filter((r) => r.signups.some((s) => s.userId === user.sub))
-			: tab === "signed-up" && !user
-				? requests.filter((r) => guestSignups.some((g) => g.requestId === r.id))
-				: canCreate && user
-					? requests.filter((r) =>
-							tab === "mine"
-								? r.createdBy === user.sub
-								: r.createdBy !== user.sub,
-						)
-					: requests;
+			: canCreate
+				? requests.filter((r) =>
+						tab === "mine"
+							? r.createdBy === user.sub
+							: r.createdBy !== user.sub,
+					)
+				: requests;
 	const now = new Date();
-	const currentFiltered = filtered.filter(
-		(r) => new Date(r.endTime) >= now,
-	);
+	const currentFiltered = filtered.filter((r) => new Date(r.endTime) >= now);
 	const pastFiltered = filtered.filter((r) => new Date(r.endTime) < now);
 
 	const sortItems = (items: Request[]) =>
 		[...items].sort((a, b) => {
-			if (user) {
-				const aUp = a.signups.some((s) => s.userId === user.sub) ? 0 : 1;
-				const bUp = b.signups.some((s) => s.userId === user.sub) ? 0 : 1;
-				if (aUp !== bUp) return aUp - bUp;
-			}
+			const aUp = a.signups.some((s) => s.userId === user.sub) ? 0 : 1;
+			const bUp = b.signups.some((s) => s.userId === user.sub) ? 0 : 1;
+			if (aUp !== bUp) return aUp - bUp;
 			return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
 		});
 
@@ -302,50 +324,40 @@ function RequestsPage() {
 
 	async function handleSignupConfirm() {
 		if (!signupDialogId) return;
-		if (user) {
-			await signUpForRequest({
-				data: {
-					requestId: signupDialogId,
-					phone: signupPhone || undefined,
-					comment: signupComment || undefined,
-				},
-			});
-		} else {
-			const { claimToken, userId } = await guestSignUpForRequest({
-				data: {
-					requestId: signupDialogId,
-					name: guestName,
-					scoutGroup: guestScoutGroup,
-					phone: signupPhone || undefined,
-					comment: signupComment || undefined,
-				},
-			});
-			const updated = [
-				...guestSignups,
-				{ token: claimToken, requestId: signupDialogId, userId },
-			];
-			setGuestSignups(updated);
-			saveStoredSignups(updated);
-		}
+		await signUpForRequest({
+			data: {
+				requestId: signupDialogId,
+				phone: signupPhone || undefined,
+				comment: signupComment || undefined,
+			},
+		});
 		setSignupDialogId(null);
 		setSignupComment("");
 		setSignupPhone("");
-		setGuestName("");
-		setGuestScoutGroup("");
+		router.invalidate();
+	}
+
+	async function handleOnBehalfConfirm() {
+		if (!onBehalfRequestId) return;
+		await bookOnBehalf({
+			data: {
+				requestId: onBehalfRequestId,
+				name: onBehalfName,
+				scoutGroup: onBehalfScoutGroup,
+				phone: onBehalfPhone || undefined,
+				comment: onBehalfComment || undefined,
+			},
+		});
+		setOnBehalfRequestId(null);
+		setOnBehalfName("");
+		setOnBehalfScoutGroup("");
+		setOnBehalfPhone("");
+		setOnBehalfComment("");
 		router.invalidate();
 	}
 
 	async function handleWithdraw(requestId: string) {
-		if (user) {
-			await withdrawFromRequest({ data: { requestId } });
-		} else {
-			const signup = guestSignups.find((s) => s.requestId === requestId);
-			if (!signup) return;
-			await withdrawGuestFromRequest({ data: { claimToken: signup.token } });
-			const updated = guestSignups.filter((s) => s.requestId !== requestId);
-			setGuestSignups(updated);
-			saveStoredSignups(updated);
-		}
+		await withdrawFromRequest({ data: { requestId } });
 		router.invalidate();
 	}
 
@@ -370,36 +382,7 @@ function RequestsPage() {
 
 	return (
 		<Box>
-			<Collapse in={infoOpen}>
-				<Alert
-					severity="info"
-					variant="outlined"
-					sx={{ mb: 2 }}
-					onClose={() => {
-						localStorage.setItem(INFO_HIDDEN_KEY, "1");
-						setInfoOpen(false);
-					}}
-				>
-					I platsbanken kan funktionärer annonsera behov av hjälp. Du som
-					ledare eller funktionär kan anmäla dig för att hjälpa till. I
-					särskilda fall kan lägerledningen komma att be specifika byar eller
-					kårer att skriva upp sig på vissa pass.
-				</Alert>
-			</Collapse>
-			{!infoOpen && (
-				<Alert
-					severity="info"
-					variant="outlined"
-					sx={{ mb: 2, cursor: "pointer", py: 0.5 }}
-					onClick={() => {
-						localStorage.removeItem(INFO_HIDDEN_KEY);
-						setInfoOpen(true);
-					}}
-					action={<ExpandMoreIcon fontSize="small" />}
-				>
-					Om platsbanken
-				</Alert>
-			)}
+			{infoBanner}
 
 			<Box
 				display="flex"
@@ -493,18 +476,10 @@ function RequestsPage() {
 								<Collapse in={!collapsed}>
 									<Stack spacing={2}>
 										{items.map((req) => {
-											const isSignedUp = user
-												? req.signups.some((s) => s.userId === user.sub)
-												: req.signups.some((s) =>
-														guestSignups.some(
-															(g) =>
-																g.userId === s.userId && g.requestId === req.id,
-														),
-													);
-											const isRemoved = user
-												? !!req.myBlock
-												: !isSignedUp &&
-													guestSignups.some((g) => g.requestId === req.id);
+											const isSignedUp = req.signups.some(
+												(s) => s.userId === user.sub,
+											);
+											const isRemoved = !!req.myBlock;
 											const isFull = req.signups.length >= req.peopleNeeded;
 
 											return (
@@ -641,7 +616,11 @@ function RequestsPage() {
 								display="flex"
 								alignItems="center"
 								onClick={() => setPastCollapsed((v) => !v)}
-								sx={{ cursor: "pointer", userSelect: "none", mb: pastCollapsed ? 0 : 1 }}
+								sx={{
+									cursor: "pointer",
+									userSelect: "none",
+									mb: pastCollapsed ? 0 : 1,
+								}}
 							>
 								<Typography
 									variant="h6"
@@ -671,30 +650,39 @@ function RequestsPage() {
 													display="flex"
 													alignItems="center"
 													onClick={toggle}
-													sx={{ cursor: "pointer", userSelect: "none", mb: collapsed ? 0 : 1 }}
+													sx={{
+														cursor: "pointer",
+														userSelect: "none",
+														mb: collapsed ? 0 : 1,
+													}}
 												>
 													<Typography
 														variant="h6"
-														sx={{ textTransform: "capitalize", color: "text.disabled", flex: 1 }}
+														sx={{
+															textTransform: "capitalize",
+															color: "text.disabled",
+															flex: 1,
+														}}
 													>
 														{label}
 													</Typography>
-													<IconButton size="small" sx={{ color: "text.disabled" }}>
-														{collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+													<IconButton
+														size="small"
+														sx={{ color: "text.disabled" }}
+													>
+														{collapsed ? (
+															<ExpandMoreIcon />
+														) : (
+															<ExpandLessIcon />
+														)}
 													</IconButton>
 												</Box>
 												<Collapse in={!collapsed}>
 													<Stack spacing={2}>
 														{items.map((req) => {
-															const isSignedUp = user
-																? req.signups.some((s) => s.userId === user.sub)
-																: req.signups.some((s) =>
-																		guestSignups.some(
-																			(g) =>
-																				g.userId === s.userId &&
-																				g.requestId === req.id,
-																		),
-																	);
+															const isSignedUp = req.signups.some(
+																(s) => s.userId === user.sub,
+															);
 															const isFull =
 																req.signups.length >= req.peopleNeeded;
 															return (
@@ -706,20 +694,42 @@ function RequestsPage() {
 																		cursor: "pointer",
 																		opacity: 0.6,
 																		"&:hover": { borderColor: "primary.light" },
-																		...(isSignedUp ? { borderColor: "primary.main" } : {}),
+																		...(isSignedUp
+																			? { borderColor: "primary.main" }
+																			: {}),
 																	}}
 																>
-																	<CardContent sx={{ "&:last-child": { pb: 2 } }}>
-																		<Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+																	<CardContent
+																		sx={{ "&:last-child": { pb: 2 } }}
+																	>
+																		<Box
+																			display="flex"
+																			justifyContent="space-between"
+																			alignItems="flex-start"
+																			gap={1}
+																		>
 																			<Box flex={1} minWidth={0}>
-																				<Typography variant="subtitle1" fontWeight={500} noWrap>
+																				<Typography
+																					variant="subtitle1"
+																					fontWeight={500}
+																					noWrap
+																				>
 																					{req.title}
 																				</Typography>
-																				<Typography variant="body2" color="text.secondary">
-																					{formatTime(req.startTime)}–{formatTime(req.endTime)}
+																				<Typography
+																					variant="body2"
+																					color="text.secondary"
+																				>
+																					{formatTime(req.startTime)}–
+																					{formatTime(req.endTime)}
 																				</Typography>
 																			</Box>
-																			<Box display="flex" alignItems="center" gap={0.5} flexShrink={0}>
+																			<Box
+																				display="flex"
+																				alignItems="center"
+																				gap={0.5}
+																				flexShrink={0}
+																			>
 																				<Chip
 																					icon={<PeopleIcon />}
 																					label={`${req.signups.length}/${req.peopleNeeded}`}
@@ -727,7 +737,10 @@ function RequestsPage() {
 																					variant="outlined"
 																					color={isFull ? "success" : "default"}
 																				/>
-																				<ChevronRightIcon fontSize="small" sx={{ color: "text.disabled" }} />
+																				<ChevronRightIcon
+																					fontSize="small"
+																					sx={{ color: "text.disabled" }}
+																				/>
 																			</Box>
 																		</Box>
 																	</CardContent>
@@ -755,20 +768,13 @@ function RequestsPage() {
 				{selectedRequest &&
 					(() => {
 						const req = selectedRequest;
-						const isSignedUp = user
-							? req.signups.some((s) => s.userId === user.sub)
-							: req.signups.some((s) =>
-									guestSignups.some(
-										(g) => g.userId === s.userId && g.requestId === req.id,
-									),
-								);
-						const isRemoved = user
-							? !!req.myBlock
-							: !isSignedUp && guestSignups.some((g) => g.requestId === req.id);
+						const isSignedUp = req.signups.some((s) => s.userId === user.sub);
+						const isRemoved = !!req.myBlock;
 						const isFull = req.signups.length >= req.peopleNeeded;
-						const isOwner =
-							isAdmin ||
-							(canCreate && user ? req.createdBy === user.sub : false);
+						const isOwner = canManageRequest(caps, req, user.sub);
+						const canOnBehalf = caps.canBookOnBehalf(
+							normalizeRequestType(req.type),
+						);
 
 						return (
 							<Box display="flex" flexDirection="column" height="100%">
@@ -834,16 +840,29 @@ function RequestsPage() {
 												Kontaktperson
 											</Typography>
 											{req.contactName && (
-												<Typography variant="body2">{req.contactName}</Typography>
+												<Typography variant="body2">
+													{req.contactName}
+												</Typography>
 											)}
 											{req.contactPhone && (
-												<Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
-													<PhoneIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+												<Box
+													display="flex"
+													alignItems="center"
+													gap={0.5}
+													mt={0.25}
+												>
+													<PhoneIcon
+														sx={{ fontSize: 14, color: "text.secondary" }}
+													/>
 													<Typography
 														variant="body2"
 														component="a"
 														href={`tel:${req.contactPhone}`}
-														sx={{ color: "inherit", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+														sx={{
+															color: "inherit",
+															textDecoration: "none",
+															"&:hover": { textDecoration: "underline" },
+														}}
 													>
 														{req.contactPhone}
 													</Typography>
@@ -895,9 +914,18 @@ function RequestsPage() {
 																	display="block"
 																	component="a"
 																	href={`tel:${s.phone}`}
-																	sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+																	sx={{
+																		textDecoration: "none",
+																		"&:hover": { textDecoration: "underline" },
+																	}}
 																>
-																	<PhoneIcon sx={{ fontSize: 10, mr: 0.5, verticalAlign: "middle" }} />
+																	<PhoneIcon
+																		sx={{
+																			fontSize: 10,
+																			mr: 0.5,
+																			verticalAlign: "middle",
+																		}}
+																	/>
 																	{s.phone}
 																</Typography>
 															)}
@@ -987,51 +1015,69 @@ function RequestsPage() {
 								</Stack>
 
 								<Box mt={2} pt={2} borderTop={1} borderColor="divider">
-									{isOwner ? (
-										<Box display="flex" gap={1}>
+									<Stack spacing={1}>
+										{isOwner ? (
+											<Box display="flex" gap={1}>
+												<Button
+													variant="outlined"
+													startIcon={<EditIcon />}
+													component={Link as any}
+													to="/requests/$requestId/edit"
+													params={{ requestId: req.id }}
+													sx={{ flex: 1 }}
+												>
+													Redigera
+												</Button>
+												<Button
+													variant="outlined"
+													color="error"
+													onClick={() => setPendingDeleteId(req.id)}
+													sx={{ flex: 1 }}
+												>
+													Avbryt förfrågan
+												</Button>
+											</Box>
+										) : isRouterLoading ? (
+											<Skeleton variant="rounded" height={36} />
+										) : isRemoved ? null : isSignedUp ? (
 											<Button
+												fullWidth
 												variant="outlined"
-												startIcon={<EditIcon />}
-												component={Link as any}
-												to="/requests/$requestId/edit"
-												params={{ requestId: req.id }}
-												sx={{ flex: 1 }}
+												color="warning"
+												onClick={() => setPendingWithdrawId(req.id)}
 											>
-												Redigera
+												Avanmäl mig
 											</Button>
+										) : (
 											<Button
-												variant="outlined"
-												color="error"
-												onClick={() => setPendingDeleteId(req.id)}
-												sx={{ flex: 1 }}
+												fullWidth
+												variant="contained"
+												disabled={isFull}
+												onClick={() => {
+													setSignupDialogId(req.id);
+													setSignupComment("");
+												}}
 											>
-												Avbryt förfrågan
+												{isFull ? "Fullt" : "Anmäl dig"}
 											</Button>
-										</Box>
-									) : isRouterLoading ? (
-										<Skeleton variant="rounded" height={36} />
-									) : isRemoved ? null : isSignedUp ? (
-										<Button
-											fullWidth
-											variant="outlined"
-											color="warning"
-											onClick={() => setPendingWithdrawId(req.id)}
-										>
-											Avanmäl mig
-										</Button>
-									) : (
-										<Button
-											fullWidth
-											variant="contained"
-											disabled={isFull}
-											onClick={() => {
-												setSignupDialogId(req.id);
-												setSignupComment("");
-											}}
-										>
-											{isFull ? "Fullt" : "Anmäl dig"}
-										</Button>
-									)}
+										)}
+										{canOnBehalf && (
+											<Button
+												fullWidth
+												variant="outlined"
+												startIcon={<PersonAddIcon />}
+												onClick={() => {
+													setOnBehalfRequestId(req.id);
+													setOnBehalfName("");
+													setOnBehalfScoutGroup("");
+													setOnBehalfPhone("");
+													setOnBehalfComment("");
+												}}
+											>
+												Anmäl någon annan
+											</Button>
+										)}
+									</Stack>
 								</Box>
 							</Box>
 						);
@@ -1047,24 +1093,6 @@ function RequestsPage() {
 				<DialogTitle>Anmäl dig</DialogTitle>
 				<DialogContent>
 					<Stack spacing={2} sx={{ mt: 1 }}>
-						{!user && (
-							<>
-								<TextField
-									label="Namn"
-									fullWidth
-									required
-									value={guestName}
-									onChange={(e) => setGuestName(e.target.value)}
-								/>
-								<TextField
-									label="Vilken scoutkår tillhör du?"
-									fullWidth
-									required
-									value={guestScoutGroup}
-									onChange={(e) => setGuestScoutGroup(e.target.value)}
-								/>
-							</>
-						)}
 						<TextField
 							label="Telefonnummer (valfritt)"
 							fullWidth
@@ -1084,10 +1112,57 @@ function RequestsPage() {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setSignupDialogId(null)}>Avbryt</Button>
+					<Button variant="contained" onClick={handleSignupConfirm}>
+						Anmäl
+					</Button>
+				</DialogActions>
+			</Dialog>
+			{/* Book on behalf dialog */}
+			<Dialog
+				open={onBehalfRequestId !== null}
+				onClose={() => setOnBehalfRequestId(null)}
+				fullWidth
+				maxWidth="xs"
+			>
+				<DialogTitle>Anmäl någon annan</DialogTitle>
+				<DialogContent>
+					<Stack spacing={2} sx={{ mt: 1 }}>
+						<TextField
+							label="Namn"
+							fullWidth
+							required
+							value={onBehalfName}
+							onChange={(e) => setOnBehalfName(e.target.value)}
+						/>
+						<TextField
+							label="Vilken scoutkår tillhör personen?"
+							fullWidth
+							required
+							value={onBehalfScoutGroup}
+							onChange={(e) => setOnBehalfScoutGroup(e.target.value)}
+						/>
+						<TextField
+							label="Telefonnummer (valfritt)"
+							fullWidth
+							value={onBehalfPhone}
+							onChange={(e) => setOnBehalfPhone(e.target.value)}
+						/>
+						<TextField
+							label="Kommentar (valfri)"
+							fullWidth
+							multiline
+							rows={2}
+							value={onBehalfComment}
+							onChange={(e) => setOnBehalfComment(e.target.value)}
+						/>
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOnBehalfRequestId(null)}>Avbryt</Button>
 					<Button
 						variant="contained"
-						onClick={handleSignupConfirm}
-						disabled={!user && (!guestName.trim() || !guestScoutGroup.trim())}
+						onClick={handleOnBehalfConfirm}
+						disabled={!onBehalfName.trim() || !onBehalfScoutGroup.trim()}
 					>
 						Anmäl
 					</Button>

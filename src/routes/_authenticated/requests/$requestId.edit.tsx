@@ -1,12 +1,4 @@
-import {
-	Box,
-	Button,
-	Stack,
-	TextField,
-	ToggleButton,
-	ToggleButtonGroup,
-	Typography,
-} from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import {
 	DatePicker,
 	LocalizationProvider,
@@ -17,6 +9,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
+import { RequestTypeField } from "#/components/request-type-field";
+import {
+	canManageRequest,
+	getCapabilities,
+	normalizeRequestType,
+	type RequestType,
+} from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useUser } from "#/lib/user-context";
 import { getRequest, updateRequest } from "#/server/requests";
@@ -25,7 +24,7 @@ export const Route = createFileRoute(
 	"/_authenticated/requests/$requestId/edit",
 )({
 	beforeLoad: ({ context }) => {
-		if (!context.user?.roles.includes("requests:create"))
+		if (!getCapabilities(context.user?.roles ?? []).canCreateAny)
 			throw new Error("unauthorized");
 	},
 	loader: ({ params }) => getRequest({ data: { id: params.requestId } }),
@@ -35,14 +34,9 @@ export const Route = createFileRoute(
 function EditRequestPage() {
 	const req = Route.useLoaderData();
 	const user = useUser();
-	const navigate = useNavigate();
+	const caps = getCapabilities(user.roles);
 
-	const isAdmin = user.roles.includes("admin");
-	const isOwner =
-		isAdmin ||
-		(req?.createdBy === user.sub && user.roles.includes("requests:create"));
-
-	if (!req || !isOwner) {
+	if (!req || !canManageRequest(caps, req, user.sub)) {
 		return (
 			<Typography color="error">
 				Förfrågan hittades inte eller du saknar behörighet.
@@ -60,10 +54,16 @@ function EditRequestPage() {
 		location: req.location ?? "",
 		contactName: req.contactName ?? "",
 		contactPhone: req.contactPhone ?? "",
-		type: (req.type ?? "leader") as "leader" | "staff",
+		type: normalizeRequestType(req.type),
 	};
 
-	return <EditForm requestId={req.id} initial={initial} />;
+	return (
+		<EditForm
+			requestId={req.id}
+			initial={initial}
+			creatableTypes={caps.creatableTypes}
+		/>
+	);
 }
 
 interface FormValues {
@@ -76,21 +76,21 @@ interface FormValues {
 	location: string;
 	contactName: string;
 	contactPhone: string;
-	type: "leader" | "staff";
+	type: RequestType;
 }
 
 function EditForm({
 	requestId,
 	initial,
+	creatableTypes,
 }: {
 	requestId: string;
 	initial: FormValues;
+	creatableTypes: readonly RequestType[];
 }) {
 	useAppBarTitle("Redigera förfrågan");
 	const navigate = useNavigate();
-	const user = useUser();
-	const canBookStaff = user.roles.includes("requests:staff:book");
-	const [type, setType] = useState<"leader" | "staff">(initial.type);
+	const [type, setType] = useState<RequestType>(initial.type);
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [date, setDate] = useState<Dayjs | null>(initial.date);
@@ -150,32 +150,11 @@ function EditForm({
 			<Box maxWidth={600}>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
-						{canBookStaff && (
-							<Box>
-								<Typography variant="body2" color="text.secondary" mb={1}>
-									Typ av förfrågan
-								</Typography>
-								<ToggleButtonGroup
-									value={type}
-									exclusive
-									onChange={(_, v) => {
-										if (v) setType(v);
-									}}
-								>
-									<ToggleButton value="leader">Ledare</ToggleButton>
-									<ToggleButton value="staff">Funktionär</ToggleButton>
-								</ToggleButtonGroup>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-									display="block"
-									mt={0.5}
-								>
-									Funktionärer kan se alla typer av pass, men ledare kan endast
-									se ledarpass.
-								</Typography>
-							</Box>
-						)}
+						<RequestTypeField
+							creatableTypes={creatableTypes}
+							value={type}
+							onChange={setType}
+						/>
 						<TextField
 							label="Titel"
 							value={title}
@@ -184,8 +163,14 @@ function EditForm({
 							fullWidth
 						/>
 						<Box>
-							<Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-								Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.
+							<Typography
+								variant="caption"
+								color="text.secondary"
+								display="block"
+								mb={0.5}
+							>
+								Beskriv vad uppgiften innebär och vad volontären behöver ta med
+								sig eller ha på sig.
 							</Typography>
 							<TextField
 								label="Beskrivning"
@@ -245,7 +230,6 @@ function EditForm({
 								value={contactName}
 								onChange={(e) => setContactName(e.target.value)}
 								fullWidth
-
 							/>
 							<TextField
 								label="Telefonnummer (valfritt)"

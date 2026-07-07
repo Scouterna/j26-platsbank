@@ -3,79 +3,85 @@ import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "#/db";
 import { verifyAndGetUser } from "#/lib/auth";
 import { resolveMyBlock } from "#/lib/blocks";
+import {
+	canManageRequest,
+	getCapabilities,
+	normalizeRequestType,
+} from "#/lib/permissions";
 import { requireUser } from "#/server/auth";
 import { withLogging } from "#/server/utils";
 
-interface GetRequestsInput {
-	guestUserIds?: string[];
-}
+export const getRequests = createServerFn({ method: "GET" }).handler(() =>
+	withLogging("getRequests", async () => {
+		const token = getCookie("j26-auth_access-token");
+		const user = token ? await verifyAndGetUser(token) : null;
+		const caps = getCapabilities(user?.roles ?? []);
 
-export const getRequests = createServerFn({ method: "GET" })
-	.inputValidator((input?: GetRequestsInput) => input ?? {})
-	.handler(({ data }) =>
-		withLogging("getRequests", async () => {
-			const token = getCookie("j26-auth_access-token");
-			const user = token ? await verifyAndGetUser(token) : null;
-			const guestUserIds = data.guestUserIds ?? [];
+		// Model B: a user only sees the event types they hold a capability
+		// for. No capability (incl. logged-out) → nothing.
+		if (caps.visibleTypes.length === 0) return [];
 
-			const canSeeStaff = user?.roles.includes("requests:staff:book") ?? false;
-
-			const requests = await prisma.request.findMany({
-				orderBy: { startTime: "asc" },
-				where: canSeeStaff ? undefined : { type: "leader" },
-				include: {
-					signups: {
-						select: {
-							userId: true,
-							userName: true,
-							scoutGroup: true,
-							phone: true,
-							comment: true,
-						},
-					},
-					blocks: {
-						select: {
-							userId: true,
-							userName: true,
-							reason: true,
-						},
+		const requests = await prisma.request.findMany({
+			orderBy: { startTime: "asc" },
+			where: { type: { in: caps.visibleTypes } },
+			include: {
+				signups: {
+					select: {
+						userId: true,
+						userName: true,
+						scoutGroup: true,
+						phone: true,
+						comment: true,
 					},
 				},
-			});
+				blocks: {
+					select: {
+						userId: true,
+						userName: true,
+						reason: true,
+					},
+				},
+			},
+		});
 
-			const isAdmin = user?.roles.includes("admin") ?? false;
-
-			return requests.map((req) => {
-				const isOwner =
-					isAdmin ||
-					(user?.sub === req.createdBy &&
-						(user?.roles.includes("requests:create") ?? false));
-				return {
-					...req,
-					signups: req.signups.map((s) =>
-						isOwner
-							? s
-							: {
-									userId: s.userId,
-									userName: null,
-									scoutGroup: null,
-									phone: null,
-									comment: null,
-								},
-					),
-					blocks: isOwner ? req.blocks : ([] as typeof req.blocks),
-					myBlock: resolveMyBlock(req.blocks, user?.sub ?? null, guestUserIds),
-				};
-			});
-		}),
-	);
+		return requests.map((req) => {
+			// Only those who can manage the request see signup PII and blocks.
+			const canManage = canManageRequest(caps, req, user?.sub);
+			return {
+				...req,
+				signups: req.signups.map((s) =>
+					canManage
+						? s
+						: {
+								userId: s.userId,
+								userName: null,
+								scoutGroup: null,
+								phone: null,
+								comment: null,
+							},
+				),
+				blocks: canManage ? req.blocks : ([] as typeof req.blocks),
+				myBlock: resolveMyBlock(req.blocks, user?.sub ?? null),
+			};
+		});
+	}),
+);
 
 export const getRequest = createServerFn({ method: "GET" })
 	.inputValidator((input: { id: string }) => input)
 	.handler(({ data }) =>
-		withLogging("getRequest", () =>
-			prisma.request.findUnique({ where: { id: data.id } }),
-		),
+		withLogging("getRequest", async () => {
+			const token = getCookie("j26-auth_access-token");
+			const user = token ? await verifyAndGetUser(token) : null;
+			const caps = getCapabilities(user?.roles ?? []);
+			const request = await prisma.request.findUnique({
+				where: { id: data.id },
+			});
+			if (!request) throw new Response("Not Found", { status: 404 });
+			if (!caps.canSee(normalizeRequestType(request.type)))
+				throw new Response("Forbidden", { status: 403 });
+			return request;
+		}),
 	);
 
 interface CreateRequestInput {
@@ -95,9 +101,8 @@ export const createRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("createRequest", async () => {
 			const user = await requireUser();
-			if (!user.roles.includes("requests:create"))
-				throw new Response("Forbidden", { status: 403 });
-			if (data.type === "staff" && !user.roles.includes("requests:staff:book"))
+			const caps = getCapabilities(user.roles);
+			if (!caps.canCreate(data.type))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.request.create({
 				data: {
@@ -135,17 +140,15 @@ export const updateRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("updateRequest", async () => {
 			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
 			const request = await prisma.request.findUnique({
 				where: { id: data.id },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			const isAdmin = user.roles.includes("admin");
-			const isOwner =
-				request.createdBy === user.sub &&
-				user.roles.includes("requests:create");
-			if (!isAdmin && !isOwner)
+			if (!canManageRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
-			if (data.type === "staff" && !user.roles.includes("requests:staff:book"))
+			// Changing the type requires being able to create the target type.
+			if (!caps.canCreate(data.type))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.request.update({
 				where: { id: data.id },
@@ -171,6 +174,13 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("signUpForRequest", async () => {
 			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
+			const request = await prisma.request.findUnique({
+				where: { id: data.requestId },
+			});
+			if (!request) throw new Response("Not Found", { status: 404 });
+			if (!caps.canBook(normalizeRequestType(request.type)))
+				throw new Response("Forbidden", { status: 403 });
 			const block = await prisma.requestBlock.findUnique({
 				where: {
 					requestId_userId: { requestId: data.requestId, userId: user.sub },
@@ -189,7 +199,13 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 		}),
 	);
 
-export const guestSignUpForRequest = createServerFn({ method: "POST" })
+/**
+ * Sign someone else up by free-text name + scout group. Requires
+ * `requests:admin:book` (or `admin`) plus the booker's own ability to book the
+ * event's type. The booked person gets a synthetic userId so they don't
+ * collide with real signups.
+ */
+export const bookOnBehalf = createServerFn({ method: "POST" })
 	.inputValidator(
 		(input: {
 			requestId: string;
@@ -199,27 +215,33 @@ export const guestSignUpForRequest = createServerFn({ method: "POST" })
 			comment?: string;
 		}) => input,
 	)
-	.handler(
-		({ data }): Promise<{ claimToken: string; userId: string }> =>
-			withLogging("guestSignUpForRequest", async () => {
-				const { randomUUID } = await import("node:crypto");
-				const claimToken = randomUUID();
-				const userId = randomUUID();
-				await prisma.requestSignup.create({
-					data: {
-						requestId: data.requestId,
-						userId,
-						userName: data.name,
-						scoutGroup: data.scoutGroup,
-						phone: data.phone ?? null,
-						comment: data.comment ?? null,
-						claimToken,
-					},
-				});
-				return { claimToken, userId };
-			}),
+	.handler(({ data }) =>
+		withLogging("bookOnBehalf", async () => {
+			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
+			const request = await prisma.request.findUnique({
+				where: { id: data.requestId },
+			});
+			if (!request) throw new Response("Not Found", { status: 404 });
+			if (!caps.canBookOnBehalf(normalizeRequestType(request.type)))
+				throw new Response("Forbidden", { status: 403 });
+			const { randomUUID } = await import("node:crypto");
+			return prisma.requestSignup.create({
+				data: {
+					requestId: data.requestId,
+					userId: randomUUID(),
+					userName: data.name,
+					scoutGroup: data.scoutGroup,
+					phone: data.phone ?? null,
+					comment: data.comment ?? null,
+				},
+			});
+		}),
 	);
 
+// Transitional: anonymous guests can no longer self-register under model B, but
+// this remains so signups created by the old guest flow can still be migrated
+// onto a real account the first time that person logs in.
 export const claimGuestSignups = createServerFn({ method: "POST" })
 	.inputValidator((input: { tokens: string[] }) => input)
 	.handler(({ data }) =>
@@ -279,16 +301,6 @@ export const claimGuestSignups = createServerFn({ method: "POST" })
 		}),
 	);
 
-export const withdrawGuestFromRequest = createServerFn({ method: "POST" })
-	.inputValidator((input: { claimToken: string }) => input)
-	.handler(({ data }) =>
-		withLogging("withdrawGuestFromRequest", () =>
-			prisma.requestSignup.delete({
-				where: { claimToken: data.claimToken },
-			}),
-		),
-	);
-
 export const withdrawFromRequest = createServerFn({ method: "POST" })
 	.inputValidator((input: { requestId: string }) => input)
 	.handler(({ data }) =>
@@ -309,15 +321,12 @@ export const kickFromRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("kickFromRequest", async () => {
 			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
 			const request = await prisma.request.findUnique({
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			const isAdmin = user.roles.includes("admin");
-			const isOwner =
-				request.createdBy === user.sub &&
-				user.roles.includes("requests:create");
-			if (!isAdmin && !isOwner)
+			if (!canManageRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			const signup = await prisma.requestSignup.findUnique({
 				where: {
@@ -351,15 +360,12 @@ export const unblockFromRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("unblockFromRequest", async () => {
 			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
 			const request = await prisma.request.findUnique({
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			const isAdmin = user.roles.includes("admin");
-			const isOwner =
-				request.createdBy === user.sub &&
-				user.roles.includes("requests:create");
-			if (!isAdmin && !isOwner)
+			if (!canManageRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.requestBlock.delete({
 				where: {
@@ -374,15 +380,12 @@ export const deleteRequest = createServerFn({ method: "POST" })
 	.handler(({ data }) =>
 		withLogging("deleteRequest", async () => {
 			const user = await requireUser();
+			const caps = getCapabilities(user.roles);
 			const request = await prisma.request.findUnique({
 				where: { id: data.id },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			const isAdmin = user.roles.includes("admin");
-			const isOwner =
-				request.createdBy === user.sub &&
-				user.roles.includes("requests:create");
-			if (!isAdmin && !isOwner)
+			if (!canManageRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.request.delete({ where: { id: data.id } });
 		}),

@@ -1,12 +1,4 @@
-import {
-	Box,
-	Button,
-	Stack,
-	TextField,
-	ToggleButton,
-	ToggleButtonGroup,
-	Typography,
-} from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import {
 	DatePicker,
 	LocalizationProvider,
@@ -17,13 +9,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useState } from "react";
+import { RequestTypeField } from "#/components/request-type-field";
+import { getCapabilities, type RequestType } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
 import { createRequest } from "#/server/requests";
 
 export const Route = createFileRoute("/_authenticated/requests/new")({
 	beforeLoad: ({ context }) => {
-		if (!context.user?.roles.includes("requests:create"))
+		if (!getCapabilities(context.user?.roles ?? []).canCreateAny)
 			throw new Error("unauthorized");
 	},
 	component: NewRequestPage,
@@ -33,8 +27,8 @@ function NewRequestPage() {
 	useAppBarTitle("Ny förfrågan");
 	const navigate = useNavigate();
 	const user = useOptionalUser();
-	const canBookStaff = user?.roles.includes("requests:staff:book") ?? false;
-	const [type, setType] = useState<"leader" | "staff">("leader");
+	const { creatableTypes } = getCapabilities(user?.roles ?? []);
+	const [type, setType] = useState<RequestType>(creatableTypes[0] ?? "leader");
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [date, setDate] = useState<Dayjs | null>(null);
@@ -96,32 +90,11 @@ function NewRequestPage() {
 			<Box maxWidth={600}>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
-						{canBookStaff && (
-							<Box>
-								<Typography variant="body2" color="text.secondary" mb={1}>
-									Typ av förfrågan
-								</Typography>
-								<ToggleButtonGroup
-									value={type}
-									exclusive
-									onChange={(_, v) => {
-										if (v) setType(v);
-									}}
-								>
-									<ToggleButton value="leader">Ledare</ToggleButton>
-									<ToggleButton value="staff">Funktionär</ToggleButton>
-								</ToggleButtonGroup>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-									display="block"
-									mt={0.5}
-								>
-									Funktionärer kan se alla typer av pass, men ledare kan endast
-									se ledarpass.
-								</Typography>
-							</Box>
-						)}
+						<RequestTypeField
+							creatableTypes={creatableTypes}
+							value={type}
+							onChange={setType}
+						/>
 						<TextField
 							label="Titel"
 							value={title}
