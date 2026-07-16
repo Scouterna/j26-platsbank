@@ -563,7 +563,9 @@ function RequestsPage() {
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
 																	/>
-																	{showTypeLabel &&
+																	{(tab === "overview" ||
+																		tab === "mine") &&
+																		showTypeLabel &&
 																		normalizeRequestTypes(req.types).map(
 																			(t) => (
 																				<Chip
