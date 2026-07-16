@@ -28,9 +28,7 @@ function NewRequestPage() {
 	const navigate = useNavigate();
 	const user = useOptionalUser();
 	const { creatableTypes } = getCapabilities(user?.roles ?? []);
-	const [types, setTypes] = useState<RequestType[]>([
-		creatableTypes[0] ?? "leader",
-	]);
+	const [types, setTypes] = useState<RequestType[]>([]);
 	const [typesError, setTypesError] = useState(false);
 	const typesFieldRef = useRef<HTMLDivElement>(null);
 	const [title, setTitle] = useState("");

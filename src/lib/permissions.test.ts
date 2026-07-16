@@ -111,9 +111,11 @@ describe("getCapabilities", () => {
 			expect(caps.creatableTypes).toEqual(["leader", "staff"]);
 		});
 
-		it("grants book/see for both types", () => {
-			expect(caps.canBook("leader")).toBe(true);
-			expect(caps.canBook("staff")).toBe(true);
+		it("sees both types but cannot book either without a book role", () => {
+			expect(caps.canSee("leader")).toBe(true);
+			expect(caps.canSee("staff")).toBe(true);
+			expect(caps.canBook("leader")).toBe(false);
+			expect(caps.canBook("staff")).toBe(false);
 			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
 		});
 
@@ -148,6 +150,13 @@ describe("getCapabilities", () => {
 			expect(caps.visibleTypes).toEqual(["leader"]);
 			expect(caps.canCreateAny).toBe(false);
 		});
+
+		it("create + leader:book sees both but books leader only", () => {
+			const caps = getCapabilities([Role.CreateAll, Role.LeaderBook]);
+			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
+			expect(caps.canBook("leader")).toBe(true);
+			expect(caps.canBook("staff")).toBe(false);
+		});
 	});
 
 	describe("canBookOnBehalf", () => {
@@ -156,16 +165,25 @@ describe("getCapabilities", () => {
 			expect(caps.canBookOnBehalf("leader")).toBe(false);
 		});
 
-		it("requires a bookable type — admin:book alone is inert", () => {
+		it("admin:book alone is inert — nothing is visible to book on behalf for", () => {
 			const caps = getCapabilities([Role.AdminBook]);
 			expect(caps.canBookOnBehalf("leader")).toBe(false);
 			expect(caps.canBookOnBehalf("staff")).toBe(false);
 		});
 
-		it("is limited to types the booker can book", () => {
+		it("is limited to types the booker can see", () => {
 			const caps = getCapabilities([Role.AdminBook, Role.LeaderBook]);
 			expect(caps.canBookOnBehalf("leader")).toBe(true);
 			expect(caps.canBookOnBehalf("staff")).toBe(false);
+		});
+
+		it("lets a coordinator book on behalf for any audience they can see, even unbookable ones", () => {
+			const caps = getCapabilities([Role.CreateAll, Role.AdminBook]);
+			expect(caps.canBookOnBehalf("leader")).toBe(true);
+			expect(caps.canBookOnBehalf("staff")).toBe(true);
+			// ...but still cannot sign themselves up for those audiences
+			expect(caps.canBook("leader")).toBe(false);
+			expect(caps.canBook("staff")).toBe(false);
 		});
 
 		it("admin can book on behalf for any type", () => {

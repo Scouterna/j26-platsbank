@@ -1,4 +1,11 @@
-import { Box, Chip, Stack, ToggleButton, Typography } from "@mui/material";
+import {
+	Box,
+	Checkbox,
+	Chip,
+	FormControlLabel,
+	FormGroup,
+	Typography,
+} from "@mui/material";
 import type { RequestType } from "#/lib/permissions";
 
 const TYPE_LABELS: Record<RequestType, string> = {
@@ -40,11 +47,7 @@ export function RequestTypeField({
 				<Typography variant="body2" color="text.secondary" mb={1}>
 					Typ av förfrågan
 				</Typography>
-				<Chip
-					label={TYPE_LABELS[value[0] ?? "leader"]}
-					color={value[0] === "staff" ? "secondary" : "primary"}
-					variant="outlined"
-				/>
+				<Chip label={TYPE_LABELS[value[0] ?? "leader"]} variant="outlined" />
 			</Box>
 		);
 	}
@@ -54,24 +57,21 @@ export function RequestTypeField({
 			<Typography variant="body2" color="text.secondary" mb={1}>
 				Vem ska se förfrågan?
 			</Typography>
-			<Stack direction="row" gap={1} flexWrap="wrap">
+			<FormGroup>
 				{creatableTypes.map((t) => (
-					<ToggleButton
+					<FormControlLabel
 						key={t}
-						value={t}
-						selected={value.includes(t)}
-						onChange={() => toggle(t)}
-						color="primary"
-						sx={{
-							textTransform: "none",
-							px: 3,
-							...(error ? { borderColor: "error.main" } : {}),
-						}}
-					>
-						{TYPE_LABELS[t]}
-					</ToggleButton>
+						control={
+							<Checkbox
+								checked={value.includes(t)}
+								onChange={() => toggle(t)}
+								color="primary"
+							/>
+						}
+						label={TYPE_LABELS[t]}
+					/>
 				))}
-			</Stack>
+			</FormGroup>
 			<Typography
 				variant="caption"
 				color={error ? "error" : "text.secondary"}

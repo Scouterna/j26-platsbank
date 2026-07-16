@@ -156,6 +156,10 @@ function RequestsPage() {
 	const caps = getCapabilities(user?.roles ?? []);
 	const canCreate = caps.canCreateAny;
 	const showTypeLabel = caps.visibleTypes.length > 1;
+	// A user can sign THEMSELVES up only for audiences they hold a book role for.
+	// Creators may see (and coordinate) events they cannot personally book.
+	const canBookRequest = (r: Request) =>
+		normalizeRequestTypes(r.types).some((t) => caps.canBook(t));
 
 	const handleRefresh = useCallback(() => router.invalidate(), [router]);
 
@@ -193,7 +197,9 @@ function RequestsPage() {
 		() =>
 			typeof window === "undefined" || !localStorage.getItem(INFO_HIDDEN_KEY),
 	);
-	const [tab, setTab] = useState<"others" | "mine" | "signed-up">("others");
+	const [tab, setTab] = useState<"others" | "mine" | "overview" | "signed-up">(
+		"others",
+	);
 	const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 	const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
 		null,
@@ -279,16 +285,30 @@ function RequestsPage() {
 	const selectedRequest =
 		requests.find((r) => r.id === selectedRequestId) ?? null;
 
+	// The request behind the "Anmäl dig" dialog, and whether the user may also
+	// book someone else onto it (surfaces the on-behalf action inside the modal).
+	const signupRequest = requests.find((r) => r.id === signupDialogId) ?? null;
+	const signupCanOnBehalf = signupRequest
+		? normalizeRequestTypes(signupRequest.types).some((t) =>
+				caps.canBookOnBehalf(t),
+			)
+		: false;
+
 	const filtered =
 		tab === "signed-up"
 			? requests.filter((r) => r.signups.some((s) => s.userId === user.sub))
-			: canCreate
-				? requests.filter((r) =>
-						tab === "mine"
-							? r.createdBy === user.sub
-							: r.createdBy !== user.sub,
-					)
-				: requests;
+			: tab === "overview"
+				? // Coordination view: every event the user can see, read-only.
+					requests
+				: canCreate
+					? requests.filter((r) =>
+							tab === "mine"
+								? r.createdBy === user.sub
+								: // "Alla" lists every event the user can book, including
+									// events they created themselves.
+									canBookRequest(r),
+						)
+					: requests;
 	const now = new Date();
 	const currentFiltered = filtered.filter((r) => new Date(r.endTime) >= now);
 	const pastFiltered = filtered.filter((r) => new Date(r.endTime) < now);
@@ -413,14 +433,25 @@ function RequestsPage() {
 				<Tabs
 					value={tab}
 					onChange={(_, v) => setTab(v)}
-					sx={{ order: { xs: 1, sm: 0 } }}
+					variant="scrollable"
+					scrollButtons="auto"
+					allowScrollButtonsMobile
+					sx={{
+						order: { xs: 1, sm: 0 },
+						// Bound the strip so scrollable Tabs knows when to overflow;
+						// full width on mobile, intrinsic width on desktop.
+						width: { xs: "100%", sm: "auto" },
+						maxWidth: "100%",
+						// Collapse the scroll buttons when disabled so the first tab
+						// sits flush with the page content instead of being pushed in
+						// by the (invisible) left button. The button reclaims space
+						// only once it becomes usable.
+						"& .MuiTabs-scrollButtons.Mui-disabled": { width: 0 },
+					}}
 				>
-					{canCreate ? (
-						<Tab label="Andras" value="others" />
-					) : (
-						<Tab label="Alla" value="others" />
-					)}
+					<Tab label="Alla" value="others" />
 					{canCreate && <Tab label="Mina" value="mine" />}
+					{canCreate && <Tab label="Översikt" value="overview" />}
 					<Tab label="Anmälda" value="signed-up" />
 				</Tabs>
 			</Box>
@@ -430,7 +461,9 @@ function RequestsPage() {
 						? "Du har inga förfrågningar än."
 						: tab === "signed-up"
 							? "Du är inte anmäld till någon förfrågan."
-							: "Inga förfrågningar ännu."}
+							: tab === "others" && canCreate
+								? "Inga förfrågningar du kan anmäla dig till just nu. Se alla förfrågningar under Översikt."
+								: "Inga förfrågningar ännu."}
 				</Typography>
 			) : (
 				<Stack spacing={4}>
@@ -482,6 +515,10 @@ function RequestsPage() {
 											);
 											const isRemoved = !!req.myBlock;
 											const isFull = req.signups.length >= req.peopleNeeded;
+											const canBookThis = canBookRequest(req);
+											// Own events are managed (Redigera/Avbryt) from the
+											// drawer, not booked — so no card sign-up button.
+											const isOwnerThis = canManageRequest(caps, req, user.sub);
 
 											return (
 												<Card
@@ -502,7 +539,6 @@ function RequestsPage() {
 																<Typography
 																	variant="subtitle1"
 																	fontWeight={600}
-																	noWrap
 																>
 																	{req.title}
 																</Typography>
@@ -538,11 +574,6 @@ function RequestsPage() {
 																							: "Ledare"
 																					}
 																					size="small"
-																					color={
-																						t === "staff"
-																							? "secondary"
-																							: "primary"
-																					}
 																					variant="outlined"
 																				/>
 																			),
@@ -558,6 +589,7 @@ function RequestsPage() {
 																onClick={(e) => e.stopPropagation()}
 															>
 																{tab !== "mine" &&
+																	tab !== "overview" &&
 																	(isRouterLoading ? (
 																		<Skeleton
 																			variant="rounded"
@@ -586,7 +618,7 @@ function RequestsPage() {
 																		>
 																			Avanmäl
 																		</Button>
-																	) : (
+																	) : canBookThis && !isOwnerThis ? (
 																		<Button
 																			size="small"
 																			variant="outlined"
@@ -599,7 +631,7 @@ function RequestsPage() {
 																		>
 																			{isFull ? "Fullt" : "Anmäl dig"}
 																		</Button>
-																	))}
+																	) : null)}
 															</Box>
 															<ChevronRightIcon
 																fontSize="small"
@@ -717,7 +749,6 @@ function RequestsPage() {
 																				<Typography
 																					variant="subtitle1"
 																					fontWeight={500}
-																					noWrap
 																				>
 																					{req.title}
 																				</Typography>
@@ -776,10 +807,15 @@ function RequestsPage() {
 						const isSignedUp = req.signups.some((s) => s.userId === user.sub);
 						const isRemoved = !!req.myBlock;
 						const isFull = req.signups.length >= req.peopleNeeded;
+						const canBookThis = canBookRequest(req);
 						const isOwner = canManageRequest(caps, req, user.sub);
 						// Creators may view the roster of any request (read-only unless
 						// they also manage it); managers additionally get the kick action.
 						const canSeeRoster = canViewRoster(caps, req, user.sub);
+						// The roster is a coordination aid, so for non-managers it is
+						// reserved for the dedicated Översikt tab. Managers (owner/admin)
+						// always see it — they need it to kick/manage.
+						const showRoster = isOwner || (canSeeRoster && tab === "overview");
 						const canOnBehalf = normalizeRequestTypes(req.types).some((t) =>
 							caps.canBookOnBehalf(t),
 						);
@@ -883,7 +919,7 @@ function RequestsPage() {
 										Skapad av {req.creatorName}
 									</Typography>
 
-									{canSeeRoster && req.signups.length > 0 && (
+									{showRoster && req.signups.length > 0 && (
 										<Box>
 											<Typography
 												variant="overline"
@@ -1058,7 +1094,7 @@ function RequestsPage() {
 											>
 												Avanmäl mig
 											</Button>
-										) : (
+										) : canBookThis ? (
 											<Button
 												fullWidth
 												variant="contained"
@@ -1070,7 +1106,7 @@ function RequestsPage() {
 											>
 												{isFull ? "Fullt" : "Anmäl dig"}
 											</Button>
-										)}
+										) : null}
 										{canOnBehalf && (
 											<Button
 												fullWidth
@@ -1120,11 +1156,32 @@ function RequestsPage() {
 						/>
 					</Stack>
 				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setSignupDialogId(null)}>Avbryt</Button>
-					<Button variant="contained" onClick={handleSignupConfirm}>
-						Anmäl
-					</Button>
+				<DialogActions
+					sx={{
+						justifyContent: signupCanOnBehalf ? "space-between" : "flex-end",
+					}}
+				>
+					{signupCanOnBehalf && (
+						<Button
+							startIcon={<PersonAddIcon />}
+							onClick={() => {
+								setOnBehalfRequestId(signupDialogId);
+								setOnBehalfName("");
+								setOnBehalfScoutGroup("");
+								setOnBehalfPhone("");
+								setOnBehalfComment("");
+								setSignupDialogId(null);
+							}}
+						>
+							Anmäl någon annan
+						</Button>
+					)}
+					<Box display="flex" gap={1}>
+						<Button onClick={() => setSignupDialogId(null)}>Avbryt</Button>
+						<Button variant="contained" onClick={handleSignupConfirm}>
+							Anmäl
+						</Button>
+					</Box>
 				</DialogActions>
 			</Dialog>
 			{/* Book on behalf dialog */}

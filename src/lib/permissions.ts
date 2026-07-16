@@ -9,22 +9,28 @@
  * Visibility model "B": there are no public events. A user only ever sees the
  * event types they hold a capability for; no roles (or logged out) → nothing.
  *
- * Creation is coarse; visibility is per-audience:
+ * Creation is coarse; seeing and booking are per-audience, and — importantly —
+ * seeing is BROADER than booking:
  *   - canCreate is a single capability (not per-type): a request may target
  *     either or both audiences. A request carries a set of types.
- *   - canSee/canBook stay per-type: a `requests:{type}:book` role only unlocks
- *     that audience's events.
+ *   - canSee(type) is granted by create (both types) OR the audience book role.
+ *     Creators see every audience so they can view rosters and coordinate.
+ *   - canBook(type) is narrower: only `admin` or `requests:{type}:book`.
+ *     Holding `requests:create` alone lets you organise and view, but NOT sign
+ *     yourself up for an audience you have no book role for.
  *
  * Per audience type (`leader` | `staff`):
- *   - canSee(type) === canBook(type):
- *       admin | requests:create | requests:{type}:book
+ *   - canSee(type):  admin | requests:create | requests:{type}:book
+ *   - canBook(type): admin | requests:{type}:book
  *
  * Cross-cutting:
  *   - `admin` is full god-mode (see/book both types, create, manage any request).
- *   - `requests:create` grants creation of BOTH types plus see/book BOTH types.
- *     It is the only non-admin role that can create.
+ *   - `requests:create` grants creation of BOTH types and see (not book) of BOTH
+ *     types. It is the only non-admin role that can create.
  *   - canManageRequest: admin, or the creator (who necessarily holds create).
- *   - canBookOnBehalf(type): (admin | requests:admin:book) AND canBook(type).
+ *   - canBookOnBehalf(type): (admin | requests:admin:book) AND canSee(type) — a
+ *     coordinator may book others onto any event they can see, including
+ *     audiences they cannot personally book.
  */
 
 export type RequestType = "leader" | "staff";
@@ -94,22 +100,24 @@ export function getCapabilities(roles: readonly string[] = []): Capabilities {
 	const hasAdminBook = set.has(Role.AdminBook);
 
 	// Creation is granted solely by `requests:create` (or admin), and covers
-	// BOTH types.
+	// BOTH types. Creation does NOT by itself grant self-booking.
 	const canCreate = isAdmin || createAll;
 
-	// Seeing/booking stays segregated by audience: a leader:book role only
-	// unlocks leader events, staff:book only staff events. `admin` and
-	// `requests:create` are cross-cutting and unlock both.
+	// Booking is segregated by audience and narrow: only admin or the audience's
+	// own `requests:{type}:book` role lets you sign YOURSELF up. `requests:create`
+	// deliberately does not grant booking.
 	const canBook = (type: RequestType): boolean =>
-		isAdmin ||
-		createAll ||
-		set.has(type === "leader" ? Role.LeaderBook : Role.StaffBook);
+		isAdmin || set.has(type === "leader" ? Role.LeaderBook : Role.StaffBook);
 
-	// Model B has no see-only role, so seeing and booking coincide.
-	const canSee = canBook;
+	// Seeing is broader than booking: creators see every audience (to view
+	// rosters and coordinate), and anyone who can book a type can also see it.
+	const canSee = (type: RequestType): boolean =>
+		isAdmin || createAll || canBook(type);
 
+	// A coordinator may sign others up for any event they can SEE, even an
+	// audience they cannot personally book.
 	const canBookOnBehalf = (type: RequestType): boolean =>
-		(isAdmin || hasAdminBook) && canBook(type);
+		(isAdmin || hasAdminBook) && canSee(type);
 
 	const visibleTypes = REQUEST_TYPES.filter((t) => canSee(t));
 	const creatableTypes = canCreate ? [...REQUEST_TYPES] : [];
