@@ -14,12 +14,12 @@ model Request {
   startTime    DateTime
   endTime      DateTime
   peopleNeeded Int
-  location     String?
+  location     String
   contactName  String?
   contactPhone String?
   createdBy    String
   creatorName  String
-  type         String          @default("leader")
+  types        String[]        @default(["leader"])
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   signups      RequestSignup[]

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
 	canManageRequest,
+	canViewRoster,
 	getCapabilities,
 	normalizeRequestType,
+	normalizeRequestTypes,
 	Role,
 } from "./permissions";
 
@@ -21,6 +23,28 @@ describe("normalizeRequestType", () => {
 	});
 });
 
+describe("normalizeRequestTypes", () => {
+	it("keeps known types in canonical order", () => {
+		expect(normalizeRequestTypes(["staff", "leader"])).toEqual([
+			"leader",
+			"staff",
+		]);
+	});
+
+	it("drops unknown values", () => {
+		expect(normalizeRequestTypes(["leader", "bogus"])).toEqual(["leader"]);
+	});
+
+	it("dedupes to distinct known types", () => {
+		expect(normalizeRequestTypes(["staff", "staff"])).toEqual(["staff"]);
+	});
+
+	it("falls back to leader when nothing is recognisable", () => {
+		expect(normalizeRequestTypes([])).toEqual(["leader"]);
+		expect(normalizeRequestTypes(["nope"])).toEqual(["leader"]);
+	});
+});
+
 describe("getCapabilities", () => {
 	it("grants nothing to a user with no roles", () => {
 		const caps = getCapabilities([]);
@@ -29,8 +53,6 @@ describe("getCapabilities", () => {
 		expect(caps.canSee("staff")).toBe(false);
 		expect(caps.canBook("leader")).toBe(false);
 		expect(caps.canBook("staff")).toBe(false);
-		expect(caps.canCreate("leader")).toBe(false);
-		expect(caps.canCreate("staff")).toBe(false);
 		expect(caps.visibleTypes).toEqual([]);
 		expect(caps.creatableTypes).toEqual([]);
 		expect(caps.canSeeAny).toBe(false);
@@ -44,6 +66,7 @@ describe("getCapabilities", () => {
 	it("ignores unknown roles", () => {
 		const caps = getCapabilities(["some:other:role", "totally-unrelated"]);
 		expect(caps.canSeeAny).toBe(false);
+		expect(caps.canCreateAny).toBe(false);
 		expect(caps.isAdmin).toBe(false);
 	});
 
@@ -58,8 +81,7 @@ describe("getCapabilities", () => {
 		});
 
 		it("cannot create anything", () => {
-			expect(caps.canCreate("leader")).toBe(false);
-			expect(caps.canCreate("staff")).toBe(false);
+			expect(caps.canCreateAny).toBe(false);
 			expect(caps.creatableTypes).toEqual([]);
 		});
 
@@ -81,48 +103,18 @@ describe("getCapabilities", () => {
 		});
 	});
 
-	describe("requests:leader:create", () => {
-		const caps = getCapabilities([Role.LeaderCreate]);
-
-		it("implies booking and seeing leader (create ⇒ book ⇒ see)", () => {
-			expect(caps.canCreate("leader")).toBe(true);
-			expect(caps.canBook("leader")).toBe(true);
-			expect(caps.canSee("leader")).toBe(true);
-		});
-
-		it("does not touch staff", () => {
-			expect(caps.canCreate("staff")).toBe(false);
-			expect(caps.canBook("staff")).toBe(false);
-			expect(caps.canSee("staff")).toBe(false);
-		});
-
-		it("lists leader as creatable and visible", () => {
-			expect(caps.creatableTypes).toEqual(["leader"]);
-			expect(caps.visibleTypes).toEqual(["leader"]);
-		});
-	});
-
-	describe("requests:staff:create", () => {
-		const caps = getCapabilities([Role.StaffCreate]);
-
-		it("implies booking and seeing staff", () => {
-			expect(caps.canCreate("staff")).toBe(true);
-			expect(caps.canBook("staff")).toBe(true);
-			expect(caps.canSee("staff")).toBe(true);
-			expect(caps.creatableTypes).toEqual(["staff"]);
-		});
-	});
-
 	describe("requests:create", () => {
 		const caps = getCapabilities([Role.CreateAll]);
 
-		it("grants create/book/see for both types", () => {
-			expect(caps.canCreate("leader")).toBe(true);
-			expect(caps.canCreate("staff")).toBe(true);
+		it("is the only non-admin role that can create, and covers both types", () => {
+			expect(caps.canCreateAny).toBe(true);
+			expect(caps.creatableTypes).toEqual(["leader", "staff"]);
+		});
+
+		it("grants book/see for both types", () => {
 			expect(caps.canBook("leader")).toBe(true);
 			expect(caps.canBook("staff")).toBe(true);
 			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
-			expect(caps.creatableTypes).toEqual(["leader", "staff"]);
 		});
 
 		it("is not admin", () => {
@@ -135,8 +127,7 @@ describe("getCapabilities", () => {
 
 		it("grants everything", () => {
 			expect(caps.isAdmin).toBe(true);
-			expect(caps.canCreate("leader")).toBe(true);
-			expect(caps.canCreate("staff")).toBe(true);
+			expect(caps.canCreateAny).toBe(true);
 			expect(caps.canBook("leader")).toBe(true);
 			expect(caps.canBook("staff")).toBe(true);
 			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
@@ -149,14 +140,13 @@ describe("getCapabilities", () => {
 			const caps = getCapabilities([Role.LeaderBook, Role.StaffBook]);
 			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
 			expect(caps.creatableTypes).toEqual([]);
+			expect(caps.canCreateAny).toBe(false);
 		});
 
-		it("leader:create + staff:book creates leader, books both", () => {
-			const caps = getCapabilities([Role.LeaderCreate, Role.StaffBook]);
-			expect(caps.creatableTypes).toEqual(["leader"]);
-			expect(caps.canBook("leader")).toBe(true);
-			expect(caps.canBook("staff")).toBe(true);
-			expect(caps.visibleTypes).toEqual(["leader", "staff"]);
+		it("a book role alongside admin:book stays limited to that audience", () => {
+			const caps = getCapabilities([Role.LeaderBook, Role.AdminBook]);
+			expect(caps.visibleTypes).toEqual(["leader"]);
+			expect(caps.canCreateAny).toBe(false);
 		});
 	});
 
@@ -187,38 +177,60 @@ describe("getCapabilities", () => {
 });
 
 describe("canManageRequest", () => {
-	const leaderReq = { createdBy: "owner-1", type: "leader" };
-	const staffReq = { createdBy: "owner-1", type: "staff" };
+	const req = { createdBy: "owner-1" };
 
 	it("lets an admin manage any request regardless of owner", () => {
 		const caps = getCapabilities([Role.Admin]);
-		expect(canManageRequest(caps, leaderReq, "someone-else")).toBe(true);
-		expect(canManageRequest(caps, staffReq, "someone-else")).toBe(true);
+		expect(canManageRequest(caps, req, "someone-else")).toBe(true);
 	});
 
-	it("lets the creator manage their request when they can create that type", () => {
-		const caps = getCapabilities([Role.LeaderCreate]);
-		expect(canManageRequest(caps, leaderReq, "owner-1")).toBe(true);
-	});
-
-	it("denies a creator a type they can no longer create", () => {
-		const caps = getCapabilities([Role.LeaderCreate]);
-		expect(canManageRequest(caps, staffReq, "owner-1")).toBe(false);
+	it("lets the creator manage their request when they can create", () => {
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canManageRequest(caps, req, "owner-1")).toBe(true);
 	});
 
 	it("denies a non-owner who is not admin", () => {
-		const caps = getCapabilities([Role.LeaderCreate]);
-		expect(canManageRequest(caps, leaderReq, "intruder")).toBe(false);
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canManageRequest(caps, req, "intruder")).toBe(false);
 	});
 
 	it("denies an owner who only holds a book role", () => {
 		const caps = getCapabilities([Role.LeaderBook]);
-		expect(canManageRequest(caps, leaderReq, "owner-1")).toBe(false);
+		expect(canManageRequest(caps, req, "owner-1")).toBe(false);
 	});
 
 	it("denies when there is no user sub and not admin", () => {
 		const caps = getCapabilities([Role.CreateAll]);
-		expect(canManageRequest(caps, leaderReq, null)).toBe(false);
-		expect(canManageRequest(caps, leaderReq, undefined)).toBe(false);
+		expect(canManageRequest(caps, req, null)).toBe(false);
+		expect(canManageRequest(caps, req, undefined)).toBe(false);
+	});
+});
+
+describe("canViewRoster", () => {
+	const req = { createdBy: "owner-1" };
+
+	it("lets an admin view any roster", () => {
+		const caps = getCapabilities([Role.Admin]);
+		expect(canViewRoster(caps, req, "someone-else")).toBe(true);
+	});
+
+	it("lets a creator view the roster of a request they do not own", () => {
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canViewRoster(caps, req, "not-the-owner")).toBe(true);
+	});
+
+	it("lets a creator view their own request's roster", () => {
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canViewRoster(caps, req, "owner-1")).toBe(true);
+	});
+
+	it("denies a user who can only book (roster stays hidden, count only)", () => {
+		const caps = getCapabilities([Role.LeaderBook]);
+		expect(canViewRoster(caps, req, "owner-1")).toBe(false);
+	});
+
+	it("denies a logged-out user", () => {
+		const caps = getCapabilities([]);
+		expect(canViewRoster(caps, req, null)).toBe(false);
 	});
 });

@@ -8,7 +8,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RequestTypeField } from "#/components/request-type-field";
 import { getCapabilities, type RequestType } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
@@ -28,7 +28,11 @@ function NewRequestPage() {
 	const navigate = useNavigate();
 	const user = useOptionalUser();
 	const { creatableTypes } = getCapabilities(user?.roles ?? []);
-	const [type, setType] = useState<RequestType>(creatableTypes[0] ?? "leader");
+	const [types, setTypes] = useState<RequestType[]>([
+		creatableTypes[0] ?? "leader",
+	]);
+	const [typesError, setTypesError] = useState(false);
+	const typesFieldRef = useRef<HTMLDivElement>(null);
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [date, setDate] = useState<Dayjs | null>(null);
@@ -43,7 +47,16 @@ function NewRequestPage() {
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title || !description || !date || !startTime || !endTime) return;
+		if (!title || !description || !location || !date || !startTime || !endTime)
+			return;
+		if (types.length === 0) {
+			setTypesError(true);
+			typesFieldRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
+			return;
+		}
 		setSubmitting(true);
 		setError(null);
 		try {
@@ -72,10 +85,10 @@ function NewRequestPage() {
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
-					location: location || undefined,
+					location,
 					contactName: contactName || undefined,
 					contactPhone: contactPhone || undefined,
-					type,
+					types,
 				},
 			});
 			navigate({ to: "/" });
@@ -90,11 +103,17 @@ function NewRequestPage() {
 			<Box maxWidth={600}>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
-						<RequestTypeField
-							creatableTypes={creatableTypes}
-							value={type}
-							onChange={setType}
-						/>
+						<Box ref={typesFieldRef}>
+							<RequestTypeField
+								creatableTypes={creatableTypes}
+								value={types}
+								onChange={(next) => {
+									setTypes(next);
+									if (next.length > 0) setTypesError(false);
+								}}
+								error={typesError}
+							/>
+						</Box>
 						<TextField
 							label="Titel"
 							value={title}
@@ -157,9 +176,10 @@ function NewRequestPage() {
 							}}
 						/>
 						<TextField
-							label="Plats (valfritt)"
+							label="Plats"
 							value={location}
 							onChange={(e) => setLocation(e.target.value)}
+							required
 							fullWidth
 							placeholder="t.ex. Gå till blå flaggan på parkeringen"
 							helperText="Beskriv noggrant var volontären ska infinna sig."

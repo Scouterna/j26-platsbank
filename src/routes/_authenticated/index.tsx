@@ -43,8 +43,9 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import {
 	canManageRequest,
+	canViewRoster,
 	getCapabilities,
-	normalizeRequestType,
+	normalizeRequestTypes,
 } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
@@ -526,22 +527,26 @@ function RequestsPage() {
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
 																	/>
-																	{showTypeLabel && (
-																		<Chip
-																			label={
-																				req.type === "staff"
-																					? "Funktionär"
-																					: "Ledare"
-																			}
-																			size="small"
-																			color={
-																				req.type === "staff"
-																					? "secondary"
-																					: "primary"
-																			}
-																			variant="outlined"
-																		/>
-																	)}
+																	{showTypeLabel &&
+																		normalizeRequestTypes(req.types).map(
+																			(t) => (
+																				<Chip
+																					key={t}
+																					label={
+																						t === "staff"
+																							? "Funktionär"
+																							: "Ledare"
+																					}
+																					size="small"
+																					color={
+																						t === "staff"
+																							? "secondary"
+																							: "primary"
+																					}
+																					variant="outlined"
+																				/>
+																			),
+																		)}
 																</Box>
 															</Box>
 
@@ -772,8 +777,11 @@ function RequestsPage() {
 						const isRemoved = !!req.myBlock;
 						const isFull = req.signups.length >= req.peopleNeeded;
 						const isOwner = canManageRequest(caps, req, user.sub);
-						const canOnBehalf = caps.canBookOnBehalf(
-							normalizeRequestType(req.type),
+						// Creators may view the roster of any request (read-only unless
+						// they also manage it); managers additionally get the kick action.
+						const canSeeRoster = canViewRoster(caps, req, user.sub);
+						const canOnBehalf = normalizeRequestTypes(req.types).some((t) =>
+							caps.canBookOnBehalf(t),
 						);
 
 						return (
@@ -875,7 +883,7 @@ function RequestsPage() {
 										Skapad av {req.creatorName}
 									</Typography>
 
-									{isOwner && req.signups.length > 0 && (
+									{canSeeRoster && req.signups.length > 0 && (
 										<Box>
 											<Typography
 												variant="overline"
@@ -939,21 +947,23 @@ function RequestsPage() {
 																</Typography>
 															)}
 														</Box>
-														<Tooltip title="Ta bort från förfrågan">
-															<IconButton
-																size="small"
-																color="warning"
-																onClick={() =>
-																	setKickTarget({
-																		requestId: req.id,
-																		userId: s.userId,
-																		userName: s.userName ?? "",
-																	})
-																}
-															>
-																<DeleteIcon fontSize="small" />
-															</IconButton>
-														</Tooltip>
+														{isOwner && (
+															<Tooltip title="Ta bort från förfrågan">
+																<IconButton
+																	size="small"
+																	color="warning"
+																	onClick={() =>
+																		setKickTarget({
+																			requestId: req.id,
+																			userId: s.userId,
+																			userName: s.userName ?? "",
+																		})
+																	}
+																>
+																	<DeleteIcon fontSize="small" />
+																</IconButton>
+															</Tooltip>
+														)}
 													</Box>
 												))}
 											</Stack>
@@ -1098,7 +1108,7 @@ function RequestsPage() {
 							fullWidth
 							value={signupPhone}
 							onChange={(e) => setSignupPhone(e.target.value)}
-							helperText="Delas endast med arrangören för att underlätta kommunikation."
+							helperText="Delas med arrangörer för att underlätta kommunikation."
 						/>
 						<TextField
 							label="Kommentar (valfri)"

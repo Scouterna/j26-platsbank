@@ -14,7 +14,14 @@ let jwksConfigPromise:
 function getJwksConfig() {
 	if (!jwksConfigPromise) {
 		jwksConfigPromise = fetch(DISCOVERY_URL)
-			.then((res) => res.json() as Promise<OpenIdConfiguration>)
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error(
+						`OIDC discovery failed: ${res.status} ${res.statusText}`,
+					);
+				}
+				return res.json() as Promise<OpenIdConfiguration>;
+			})
 			.then((config) => ({
 				issuer: config.issuer,
 				jwks: createRemoteJWKSet(new URL(config.jwks_uri)),

@@ -8,12 +8,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RequestTypeField } from "#/components/request-type-field";
 import {
 	canManageRequest,
 	getCapabilities,
-	normalizeRequestType,
+	normalizeRequestTypes,
 	type RequestType,
 } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
@@ -54,7 +54,7 @@ function EditRequestPage() {
 		location: req.location ?? "",
 		contactName: req.contactName ?? "",
 		contactPhone: req.contactPhone ?? "",
-		type: normalizeRequestType(req.type),
+		types: normalizeRequestTypes(req.types),
 	};
 
 	return (
@@ -76,7 +76,7 @@ interface FormValues {
 	location: string;
 	contactName: string;
 	contactPhone: string;
-	type: RequestType;
+	types: RequestType[];
 }
 
 function EditForm({
@@ -90,7 +90,9 @@ function EditForm({
 }) {
 	useAppBarTitle("Redigera förfrågan");
 	const navigate = useNavigate();
-	const [type, setType] = useState<RequestType>(initial.type);
+	const [types, setTypes] = useState<RequestType[]>(initial.types);
+	const [typesError, setTypesError] = useState(false);
+	const typesFieldRef = useRef<HTMLDivElement>(null);
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [date, setDate] = useState<Dayjs | null>(initial.date);
@@ -107,7 +109,16 @@ function EditForm({
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title || !description || !date || !startTime || !endTime) return;
+		if (!title || !description || !location || !date || !startTime || !endTime)
+			return;
+		if (types.length === 0) {
+			setTypesError(true);
+			typesFieldRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
+			return;
+		}
 		setSubmitting(true);
 		setError(null);
 		try {
@@ -132,10 +143,10 @@ function EditForm({
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
-					location: location || undefined,
+					location,
 					contactName: contactName || undefined,
 					contactPhone: contactPhone || undefined,
-					type,
+					types,
 				},
 			});
 			navigate({ to: "/" });
@@ -150,11 +161,17 @@ function EditForm({
 			<Box maxWidth={600}>
 				<form onSubmit={handleSubmit}>
 					<Stack spacing={3}>
-						<RequestTypeField
-							creatableTypes={creatableTypes}
-							value={type}
-							onChange={setType}
-						/>
+						<Box ref={typesFieldRef}>
+							<RequestTypeField
+								creatableTypes={creatableTypes}
+								value={types}
+								onChange={(next) => {
+									setTypes(next);
+									if (next.length > 0) setTypesError(false);
+								}}
+								error={typesError}
+							/>
+						</Box>
 						<TextField
 							label="Titel"
 							value={title}
@@ -217,9 +234,10 @@ function EditForm({
 							}}
 						/>
 						<TextField
-							label="Plats (valfritt)"
+							label="Plats"
 							value={location}
 							onChange={(e) => setLocation(e.target.value)}
+							required
 							fullWidth
 							placeholder="t.ex. Gå till blå flaggan på parkeringen"
 							helperText="Beskriv noggrant var volontären ska infinna sig."

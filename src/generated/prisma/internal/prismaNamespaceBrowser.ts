@@ -84,7 +84,7 @@ export const RequestScalarFieldEnum = {
   contactPhone: 'contactPhone',
   createdBy: 'createdBy',
   creatorName: 'creatorName',
-  type: 'type',
+  types: 'types',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

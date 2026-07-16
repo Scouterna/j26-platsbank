@@ -5,8 +5,11 @@ import { verifyAndGetUser } from "#/lib/auth";
 import { resolveMyBlock } from "#/lib/blocks";
 import {
 	canManageRequest,
+	canViewRoster,
 	getCapabilities,
-	normalizeRequestType,
+	normalizeRequestTypes,
+	REQUEST_TYPES,
+	type RequestType,
 } from "#/lib/permissions";
 import { requireUser } from "#/server/auth";
 import { withLogging } from "#/server/utils";
@@ -23,7 +26,8 @@ export const getRequests = createServerFn({ method: "GET" }).handler(() =>
 
 		const requests = await prisma.request.findMany({
 			orderBy: { startTime: "asc" },
-			where: { type: { in: caps.visibleTypes } },
+			// A request is visible if any of its audiences is visible to the user.
+			where: { types: { hasSome: caps.visibleTypes } },
 			include: {
 				signups: {
 					select: {
@@ -45,12 +49,15 @@ export const getRequests = createServerFn({ method: "GET" }).handler(() =>
 		});
 
 		return requests.map((req) => {
-			// Only those who can manage the request see signup PII and blocks.
+			// Managers (creator/admin) can act on the request — they alone see
+			// the block list. Any creator, however, may view the signup roster
+			// (with contact details) of ANY request to coordinate across passes.
 			const canManage = canManageRequest(caps, req, user?.sub);
+			const canSeeRoster = canViewRoster(caps, req, user?.sub);
 			return {
 				...req,
 				signups: req.signups.map((s) =>
-					canManage
+					canSeeRoster
 						? s
 						: {
 								userId: s.userId,
@@ -78,7 +85,7 @@ export const getRequest = createServerFn({ method: "GET" })
 				where: { id: data.id },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!caps.canSee(normalizeRequestType(request.type)))
+			if (!normalizeRequestTypes(request.types).some((t) => caps.canSee(t)))
 				throw new Response("Forbidden", { status: 403 });
 			return request;
 		}),
@@ -90,10 +97,10 @@ interface CreateRequestInput {
 	startTime: string;
 	endTime: string;
 	peopleNeeded: number;
-	location?: string;
+	location: string;
 	contactName?: string;
 	contactPhone?: string;
-	type: "leader" | "staff";
+	types: RequestType[];
 }
 
 export const createRequest = createServerFn({ method: "POST" })
@@ -102,8 +109,11 @@ export const createRequest = createServerFn({ method: "POST" })
 		withLogging("createRequest", async () => {
 			const user = await requireUser();
 			const caps = getCapabilities(user.roles);
-			if (!caps.canCreate(data.type))
-				throw new Response("Forbidden", { status: 403 });
+			if (!caps.canCreateAny) throw new Response("Forbidden", { status: 403 });
+			// Creation is not per-type; just require a non-empty set of known types.
+			const types = REQUEST_TYPES.filter((t) => data.types.includes(t));
+			if (types.length === 0)
+				throw new Response("Bad Request", { status: 400 });
 			return prisma.request.create({
 				data: {
 					title: data.title,
@@ -111,10 +121,10 @@ export const createRequest = createServerFn({ method: "POST" })
 					startTime: new Date(data.startTime),
 					endTime: new Date(data.endTime),
 					peopleNeeded: data.peopleNeeded,
-					location: data.location ?? null,
+					location: data.location,
 					contactName: data.contactName ?? null,
 					contactPhone: data.contactPhone ?? null,
-					type: data.type,
+					types,
 					createdBy: user.sub,
 					creatorName: user.name,
 				},
@@ -129,10 +139,10 @@ interface UpdateRequestInput {
 	startTime: string;
 	endTime: string;
 	peopleNeeded: number;
-	location?: string;
+	location: string;
 	contactName?: string;
 	contactPhone?: string;
-	type: "leader" | "staff";
+	types: RequestType[];
 }
 
 export const updateRequest = createServerFn({ method: "POST" })
@@ -147,9 +157,11 @@ export const updateRequest = createServerFn({ method: "POST" })
 			if (!request) throw new Response("Not Found", { status: 404 });
 			if (!canManageRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
-			// Changing the type requires being able to create the target type.
-			if (!caps.canCreate(data.type))
-				throw new Response("Forbidden", { status: 403 });
+			// A manager can assign any audience (creation is not per-type); just
+			// require a non-empty set of known types.
+			const types = REQUEST_TYPES.filter((t) => data.types.includes(t));
+			if (types.length === 0)
+				throw new Response("Bad Request", { status: 400 });
 			return prisma.request.update({
 				where: { id: data.id },
 				data: {
@@ -158,10 +170,10 @@ export const updateRequest = createServerFn({ method: "POST" })
 					startTime: new Date(data.startTime),
 					endTime: new Date(data.endTime),
 					peopleNeeded: data.peopleNeeded,
-					location: data.location ?? null,
+					location: data.location,
 					contactName: data.contactName ?? null,
 					contactPhone: data.contactPhone ?? null,
-					type: data.type,
+					types,
 				},
 			});
 		}),
@@ -179,7 +191,7 @@ export const signUpForRequest = createServerFn({ method: "POST" })
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!caps.canBook(normalizeRequestType(request.type)))
+			if (!normalizeRequestTypes(request.types).some((t) => caps.canBook(t)))
 				throw new Response("Forbidden", { status: 403 });
 			const block = await prisma.requestBlock.findUnique({
 				where: {
@@ -223,7 +235,11 @@ export const bookOnBehalf = createServerFn({ method: "POST" })
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!caps.canBookOnBehalf(normalizeRequestType(request.type)))
+			if (
+				!normalizeRequestTypes(request.types).some((t) =>
+					caps.canBookOnBehalf(t),
+				)
+			)
 				throw new Response("Forbidden", { status: 403 });
 			const { randomUUID } = await import("node:crypto");
 			return prisma.requestSignup.create({
