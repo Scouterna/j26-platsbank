@@ -9,6 +9,8 @@ const BASE = "/_services/platsbank";
 
 const config = defineConfig({
 	base: BASE,
+	// Expose Tolgee config to the client bundle (mirrors j26-map).
+	envPrefix: ["VITE_", "J26_PUBLIC_"],
 	plugins: [
 		devtools(),
 		nitro({ baseURL: BASE, rollupConfig: { external: [/^@sentry\//] } }),

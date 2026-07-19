@@ -6,6 +6,7 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslate } from "@tolgee/react";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useRef, useState } from "react";
@@ -24,7 +25,8 @@ export const Route = createFileRoute("/_authenticated/requests/new")({
 });
 
 function NewRequestPage() {
-	useAppBarTitle("Ny förfrågan");
+	const { t } = useTranslate("platsbank");
+	useAppBarTitle(t("appBar.newRequest", "Ny förfrågan"));
 	const navigate = useNavigate();
 	const user = useOptionalUser();
 	const { creatableTypes } = getCapabilities(user?.roles ?? []);
@@ -67,12 +69,14 @@ function NewRequestPage() {
 				.minute(endTime.minute())
 				.second(0);
 			if (startDateTime.valueOf() <= Date.now()) {
-				setError("Förfrågan måste vara i framtiden.");
+				setError(t("error.mustBeFuture", "Förfrågan måste vara i framtiden."));
 				setSubmitting(false);
 				return;
 			}
 			if (endDateTime.valueOf() <= startDateTime.valueOf()) {
-				setError("Sluttiden måste vara efter starttiden.");
+				setError(
+					t("error.endAfterStart", "Sluttiden måste vara efter starttiden."),
+				);
 				setSubmitting(false);
 				return;
 			}
@@ -91,7 +95,7 @@ function NewRequestPage() {
 			});
 			navigate({ to: "/" });
 		} catch {
-			setError("Något gick fel. Försök igen.");
+			setError(t("error.generic", "Något gick fel. Försök igen."));
 			setSubmitting(false);
 		}
 	}
@@ -113,7 +117,7 @@ function NewRequestPage() {
 							/>
 						</Box>
 						<TextField
-							label="Titel"
+							label={t("form.titleLabel", "Titel")}
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 							required
@@ -126,11 +130,13 @@ function NewRequestPage() {
 								display="block"
 								mb={0.5}
 							>
-								Beskriv vad uppgiften innebär och vad volontären behöver ta med
-								sig eller ha på sig.
+								{t(
+									"form.descriptionHelp",
+									"Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
+								)}
 							</Typography>
 							<TextField
-								label="Beskrivning"
+								label={t("form.descriptionLabel", "Beskrivning")}
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								required
@@ -140,21 +146,21 @@ function NewRequestPage() {
 							/>
 						</Box>
 						<DatePicker
-							label="Datum"
+							label={t("form.dateLabel", "Datum")}
 							value={date}
 							onChange={setDate}
 							slotProps={{ textField: { required: true, fullWidth: true } }}
 						/>
 						<Box display="flex" gap={2}>
 							<TimePicker
-								label="Starttid"
+								label={t("form.startTimeLabel", "Starttid")}
 								value={startTime}
 								onChange={setStartTime}
 								ampm={false}
 								slotProps={{ textField: { required: true, fullWidth: true } }}
 							/>
 							<TimePicker
-								label="Sluttid"
+								label={t("form.endTimeLabel", "Sluttid")}
 								value={endTime}
 								onChange={setEndTime}
 								ampm={false}
@@ -162,7 +168,7 @@ function NewRequestPage() {
 							/>
 						</Box>
 						<TextField
-							label="Antal behövda"
+							label={t("form.peopleNeededLabel", "Antal behövda")}
 							type="number"
 							value={peopleNeeded}
 							onChange={(e) => setPeopleNeeded(e.target.value)}
@@ -174,23 +180,29 @@ function NewRequestPage() {
 							}}
 						/>
 						<TextField
-							label="Plats"
+							label={t("form.locationLabel", "Plats")}
 							value={location}
 							onChange={(e) => setLocation(e.target.value)}
 							required
 							fullWidth
-							placeholder="t.ex. Gå till blå flaggan på parkeringen"
-							helperText="Beskriv noggrant var volontären ska infinna sig."
+							placeholder={t(
+								"form.locationPlaceholder",
+								"t.ex. Gå till blå flaggan på parkeringen",
+							)}
+							helperText={t(
+								"form.locationHelp",
+								"Beskriv noggrant var volontären ska infinna sig.",
+							)}
 						/>
 						<Box display="flex" gap={2}>
 							<TextField
-								label="Kontaktperson (valfritt)"
+								label={t("form.contactNameLabel", "Kontaktperson (valfritt)")}
 								value={contactName}
 								onChange={(e) => setContactName(e.target.value)}
 								fullWidth
 							/>
 							<TextField
-								label="Telefonnummer (valfritt)"
+								label={t("form.contactPhoneLabel", "Telefonnummer (valfritt)")}
 								value={contactPhone}
 								onChange={(e) => setContactPhone(e.target.value)}
 								fullWidth
@@ -203,14 +215,16 @@ function NewRequestPage() {
 						)}
 						<Box display="flex" gap={2}>
 							<Button type="submit" variant="contained" disabled={submitting}>
-								{submitting ? "Sparar..." : "Skapa förfrågan"}
+								{submitting
+									? t("form.saving", "Sparar...")
+									: t("form.create", "Skapa förfrågan")}
 							</Button>
 							<Button
 								variant="outlined"
 								onClick={() => navigate({ to: "/" })}
 								disabled={submitting}
 							>
-								Avbryt
+								{t("common.cancel", "Avbryt")}
 							</Button>
 						</Box>
 					</Stack>

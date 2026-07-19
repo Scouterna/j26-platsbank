@@ -40,6 +40,7 @@ import {
 	useRouter,
 	useRouterState,
 } from "@tanstack/react-router";
+import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
 import {
 	canManageRequest,
@@ -62,6 +63,8 @@ import {
 
 const CLAIM_TOKENS_KEY = "j26-claim-tokens";
 const INFO_HIDDEN_KEY = "j26-platsbank-info-hidden";
+
+type TFn = ReturnType<typeof useTranslate>["t"];
 
 interface GuestSignup {
 	token: string;
@@ -99,7 +102,7 @@ function getDayKey(d: Date | string) {
 	return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
-function getDayLabel(d: Date | string) {
+function getDayLabel(d: Date | string, t: TFn) {
 	const date = new Date(d);
 	const today = new Date();
 	const tomorrow = new Date(today);
@@ -110,8 +113,8 @@ function getDayLabel(d: Date | string) {
 		a.getMonth() === b.getMonth() &&
 		a.getDate() === b.getDate();
 
-	if (sameDay(date, today)) return "Idag";
-	if (sameDay(date, tomorrow)) return "Imorgon";
+	if (sameDay(date, today)) return t("day.today", "Idag");
+	if (sameDay(date, tomorrow)) return t("day.tomorrow", "Imorgon");
 
 	const diffDays = (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
 	if (diffDays > 0 && diffDays < 7) {
@@ -131,12 +134,12 @@ function getDayLabel(d: Date | string) {
 
 type Request = NonNullable<Awaited<ReturnType<typeof getRequests>>>[number];
 
-function groupByDay(items: Request[]) {
+function groupByDay(items: Request[], t: TFn) {
 	const map = new Map<string, { label: string; items: Request[] }>();
 	for (const item of items) {
 		const key = getDayKey(item.startTime);
 		if (!map.has(key)) {
-			map.set(key, { label: getDayLabel(item.startTime), items: [] });
+			map.set(key, { label: getDayLabel(item.startTime, t), items: [] });
 		}
 		map.get(key)!.items.push(item);
 	}
@@ -146,6 +149,7 @@ function groupByDay(items: Request[]) {
 type KickTarget = { requestId: string; userId: string; userName: string };
 
 function RequestsPage() {
+	const { t } = useTranslate("platsbank");
 	const requests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
@@ -159,15 +163,15 @@ function RequestsPage() {
 	// A user can sign THEMSELVES up only for audiences they hold a book role for.
 	// Creators may see (and coordinate) events they cannot personally book.
 	const canBookRequest = (r: Request) =>
-		normalizeRequestTypes(r.types).some((t) => caps.canBook(t));
+		normalizeRequestTypes(r.types).some((audience) => caps.canBook(audience));
 
 	const handleRefresh = useCallback(() => router.invalidate(), [router]);
 
 	useAppBarTitle({
-		title: "Förfrågningar",
+		title: t("appBar.requests", "Förfrågningar"),
 		action: {
 			icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>',
-			label: "Uppdatera",
+			label: t("appBar.refresh", "Uppdatera"),
 			type: "event",
 			id: "refresh",
 		},
@@ -236,10 +240,10 @@ function RequestsPage() {
 						setInfoOpen(false);
 					}}
 				>
-					I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare
-					eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall
-					kan lägerledningen komma att be specifika byar eller kårer att skriva
-					upp sig på vissa pass.
+					{t(
+						"info.banner",
+						"I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall kan lägerledningen komma att be specifika byar eller kårer att skriva upp sig på vissa pass.",
+					)}
 				</Alert>
 			</Collapse>
 			{!infoOpen && (
@@ -253,7 +257,7 @@ function RequestsPage() {
 					}}
 					action={<ExpandMoreIcon fontSize="small" />}
 				>
-					Om platsbanken
+					{t("info.collapsed", "Om platsbanken")}
 				</Alert>
 			)}
 		</>
@@ -264,7 +268,7 @@ function RequestsPage() {
 			<Box>
 				{infoBanner}
 				<Typography color="text.secondary">
-					Logga in för att se förfrågningar.
+					{t("list.loginPrompt", "Logga in för att se förfrågningar.")}
 				</Typography>
 			</Box>
 		);
@@ -275,8 +279,10 @@ function RequestsPage() {
 			<Box>
 				{infoBanner}
 				<Typography color="text.secondary">
-					Du har inte behörighet att se några förfrågningar. Kontakta
-					lägerledningen om du tror att detta är fel.
+					{t(
+						"list.noPermission",
+						"Du har inte behörighet att se några förfrågningar. Kontakta lägerledningen om du tror att detta är fel.",
+					)}
 				</Typography>
 			</Box>
 		);
@@ -289,8 +295,8 @@ function RequestsPage() {
 	// book someone else onto it (surfaces the on-behalf action inside the modal).
 	const signupRequest = requests.find((r) => r.id === signupDialogId) ?? null;
 	const signupCanOnBehalf = signupRequest
-		? normalizeRequestTypes(signupRequest.types).some((t) =>
-				caps.canBookOnBehalf(t),
+		? normalizeRequestTypes(signupRequest.types).some((audience) =>
+				caps.canBookOnBehalf(audience),
 			)
 		: false;
 
@@ -326,6 +332,7 @@ function RequestsPage() {
 			(a, b) =>
 				new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
 		),
+		t,
 	).map((group) => ({ ...group, items: sortItems(group.items) }));
 
 	const pastGrouped = groupByDay(
@@ -333,6 +340,7 @@ function RequestsPage() {
 			(a, b) =>
 				new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
 		),
+		t,
 	).map((group) => ({ ...group, items: sortItems(group.items) }));
 
 	async function handleDeleteConfirm() {
@@ -426,7 +434,7 @@ function RequestsPage() {
 							component={Link}
 							to="/requests/new"
 						>
-							Ny förfrågan
+							{t("appBar.newRequest", "Ny förfrågan")}
 						</Button>
 					)}
 				</Box>
@@ -449,27 +457,32 @@ function RequestsPage() {
 						"& .MuiTabs-scrollButtons.Mui-disabled": { width: 0 },
 					}}
 				>
-					<Tab label="Alla" value="others" />
-					{canCreate && <Tab label="Mina" value="mine" />}
-					{canCreate && <Tab label="Översikt" value="overview" />}
-					<Tab label="Anmälda" value="signed-up" />
+					<Tab label={t("tabs.all", "Alla")} value="others" />
+					{canCreate && <Tab label={t("tabs.mine", "Mina")} value="mine" />}
+					{canCreate && (
+						<Tab label={t("tabs.overview", "Översikt")} value="overview" />
+					)}
+					<Tab label={t("tabs.signedUp", "Anmälda")} value="signed-up" />
 				</Tabs>
 			</Box>
 			{filtered.length === 0 ? (
 				<Typography color="text.secondary">
 					{tab === "mine"
-						? "Du har inga förfrågningar än."
+						? t("empty.mine", "Du har inga förfrågningar än.")
 						: tab === "signed-up"
-							? "Du är inte anmäld till någon förfrågan."
+							? t("empty.signedUp", "Du är inte anmäld till någon förfrågan.")
 							: tab === "others" && canCreate
-								? "Inga förfrågningar du kan anmäla dig till just nu. Se alla förfrågningar under Översikt."
-								: "Inga förfrågningar ännu."}
+								? t(
+										"empty.othersCreator",
+										"Inga förfrågningar du kan anmäla dig till just nu. Se alla förfrågningar under Översikt.",
+									)
+								: t("empty.others", "Inga förfrågningar ännu.")}
 				</Typography>
 			) : (
 				<Stack spacing={4}>
 					{grouped.length === 0 && (
 						<Typography color="text.secondary">
-							Inga kommande förfrågningar.
+							{t("empty.upcoming", "Inga kommande förfrågningar.")}
 						</Typography>
 					)}
 					{grouped.map(({ label, items }) => {
@@ -563,17 +576,16 @@ function RequestsPage() {
 																		variant="outlined"
 																		color={isFull ? "success" : "default"}
 																	/>
-																	{(tab === "overview" ||
-																		tab === "mine") &&
+																	{(tab === "overview" || tab === "mine") &&
 																		showTypeLabel &&
 																		normalizeRequestTypes(req.types).map(
-																			(t) => (
+																			(audience) => (
 																				<Chip
-																					key={t}
+																					key={audience}
 																					label={
-																						t === "staff"
-																							? "Funktionär"
-																							: "Ledare"
+																						audience === "staff"
+																							? t("type.staff", "Funktionär")
+																							: t("type.leader", "Ledare")
 																					}
 																					size="small"
 																					variant="outlined"
@@ -607,7 +619,7 @@ function RequestsPage() {
 																				setSelectedRequestId(req.id)
 																			}
 																		>
-																			Nekad
+																			{t("card.denied", "Nekad")}
 																		</Button>
 																	) : isSignedUp ? (
 																		<Button
@@ -618,7 +630,7 @@ function RequestsPage() {
 																				setPendingWithdrawId(req.id)
 																			}
 																		>
-																			Avanmäl
+																			{t("card.withdraw", "Avanmäl")}
 																		</Button>
 																	) : canBookThis && !isOwnerThis ? (
 																		<Button
@@ -631,7 +643,9 @@ function RequestsPage() {
 																				setSignupComment("");
 																			}}
 																		>
-																			{isFull ? "Fullt" : "Anmäl dig"}
+																			{isFull
+																				? t("card.full", "Fullt")
+																				: t("card.signUp", "Anmäl dig")}
 																		</Button>
 																	) : null)}
 															</Box>
@@ -665,7 +679,7 @@ function RequestsPage() {
 									variant="h6"
 									sx={{ color: "text.disabled", flex: 1 }}
 								>
-									Tidigare
+									{t("section.past", "Tidigare")}
 								</Typography>
 								<IconButton size="small" sx={{ color: "text.disabled" }}>
 									{pastCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
@@ -818,8 +832,8 @@ function RequestsPage() {
 						// reserved for the dedicated Översikt tab. Managers (owner/admin)
 						// always see it — they need it to kick/manage.
 						const showRoster = isOwner || (canSeeRoster && tab === "overview");
-						const canOnBehalf = normalizeRequestTypes(req.types).some((t) =>
-							caps.canBookOnBehalf(t),
+						const canOnBehalf = normalizeRequestTypes(req.types).some(
+							(audience) => caps.canBookOnBehalf(audience),
 						);
 
 						return (
@@ -852,7 +866,7 @@ function RequestsPage() {
 												color="text.secondary"
 												display="block"
 											>
-												Beskrivning
+												{t("detail.description", "Beskrivning")}
 											</Typography>
 											<Typography variant="body2">{req.description}</Typography>
 										</Box>
@@ -861,7 +875,14 @@ function RequestsPage() {
 									<Box display="flex" gap={1} flexWrap="wrap">
 										<Chip
 											icon={<PeopleIcon />}
-											label={`${req.signups.length}/${req.peopleNeeded} person${req.peopleNeeded !== 1 ? "er" : ""}`}
+											label={t(
+												"detail.peopleCount",
+												"{count}/{needed} {needed, plural, one {person} other {personer}}",
+												{
+													count: req.signups.length,
+													needed: req.peopleNeeded,
+												},
+											)}
 											size="small"
 											variant="outlined"
 											color={isFull ? "success" : "default"}
@@ -883,7 +904,7 @@ function RequestsPage() {
 												color="text.secondary"
 												display="block"
 											>
-												Kontaktperson
+												{t("detail.contact", "Kontaktperson")}
 											</Typography>
 											{req.contactName && (
 												<Typography variant="body2">
@@ -918,7 +939,9 @@ function RequestsPage() {
 									)}
 
 									<Typography variant="caption" color="text.secondary">
-										Skapad av {req.creatorName}
+										{t("detail.createdBy", "Skapad av {name}", {
+											name: req.creatorName,
+										})}
 									</Typography>
 
 									{showRoster && req.signups.length > 0 && (
@@ -929,7 +952,7 @@ function RequestsPage() {
 												display="block"
 												mb={0.5}
 											>
-												Anmälda
+												{t("detail.signedUp", "Anmälda")}
 											</Typography>
 											<Stack spacing={1}>
 												{req.signups.map((s) => (
@@ -986,7 +1009,12 @@ function RequestsPage() {
 															)}
 														</Box>
 														{isOwner && (
-															<Tooltip title="Ta bort från förfrågan">
+															<Tooltip
+																title={t(
+																	"detail.removeTooltip",
+																	"Ta bort från förfrågan",
+																)}
+															>
 																<IconButton
 																	size="small"
 																	color="warning"
@@ -1016,7 +1044,7 @@ function RequestsPage() {
 												display="block"
 												mb={0.5}
 											>
-												Blockerade
+												{t("detail.blocked", "Blockerade")}
 											</Typography>
 											<Stack spacing={1}>
 												{req.blocks.map((b) => (
@@ -1039,7 +1067,9 @@ function RequestsPage() {
 																{b.reason}
 															</Typography>
 														</Box>
-														<Tooltip title="Återinför">
+														<Tooltip
+															title={t("detail.reinstateTooltip", "Återinför")}
+														>
 															<IconButton
 																size="small"
 																color="primary"
@@ -1056,8 +1086,14 @@ function RequestsPage() {
 
 									{!isOwner && isRemoved && (
 										<Alert severity="warning">
-											Du har nekats deltagande i denna förfrågan.
-											{req.myBlock && ` Anledning: ${req.myBlock}`}
+											{t(
+												"detail.deniedAlert",
+												"Du har nekats deltagande i denna förfrågan.",
+											)}
+											{req.myBlock &&
+												` ${t("detail.deniedReason", "Anledning: {reason}", {
+													reason: req.myBlock,
+												})}`}
 										</Alert>
 									)}
 								</Stack>
@@ -1074,7 +1110,7 @@ function RequestsPage() {
 													params={{ requestId: req.id }}
 													sx={{ flex: 1 }}
 												>
-													Redigera
+													{t("detail.edit", "Redigera")}
 												</Button>
 												<Button
 													variant="outlined"
@@ -1082,7 +1118,7 @@ function RequestsPage() {
 													onClick={() => setPendingDeleteId(req.id)}
 													sx={{ flex: 1 }}
 												>
-													Avbryt förfrågan
+													{t("detail.cancelRequest", "Avbryt förfrågan")}
 												</Button>
 											</Box>
 										) : isRouterLoading ? (
@@ -1094,7 +1130,7 @@ function RequestsPage() {
 												color="warning"
 												onClick={() => setPendingWithdrawId(req.id)}
 											>
-												Avanmäl mig
+												{t("detail.withdrawMe", "Avanmäl mig")}
 											</Button>
 										) : canBookThis ? (
 											<Button
@@ -1106,7 +1142,9 @@ function RequestsPage() {
 													setSignupComment("");
 												}}
 											>
-												{isFull ? "Fullt" : "Anmäl dig"}
+												{isFull
+													? t("card.full", "Fullt")
+													: t("card.signUp", "Anmäl dig")}
 											</Button>
 										) : null}
 										{canOnBehalf && (
@@ -1122,7 +1160,7 @@ function RequestsPage() {
 													setOnBehalfComment("");
 												}}
 											>
-												Anmäl någon annan
+												{t("detail.signUpOther", "Anmäl någon annan")}
 											</Button>
 										)}
 									</Stack>
@@ -1138,18 +1176,21 @@ function RequestsPage() {
 				fullWidth
 				maxWidth="xs"
 			>
-				<DialogTitle>Anmäl dig</DialogTitle>
+				<DialogTitle>{t("signup.title", "Anmäl dig")}</DialogTitle>
 				<DialogContent>
 					<Stack spacing={2} sx={{ mt: 1 }}>
 						<TextField
-							label="Telefonnummer (valfritt)"
+							label={t("signup.phoneLabel", "Telefonnummer (valfritt)")}
 							fullWidth
 							value={signupPhone}
 							onChange={(e) => setSignupPhone(e.target.value)}
-							helperText="Delas med arrangörer för att underlätta kommunikation."
+							helperText={t(
+								"signup.phoneHelp",
+								"Delas med arrangörer för att underlätta kommunikation.",
+							)}
 						/>
 						<TextField
-							label="Kommentar (valfri)"
+							label={t("signup.commentLabel", "Kommentar (valfri)")}
 							fullWidth
 							multiline
 							rows={2}
@@ -1175,13 +1216,15 @@ function RequestsPage() {
 								setSignupDialogId(null);
 							}}
 						>
-							Anmäl någon annan
+							{t("detail.signUpOther", "Anmäl någon annan")}
 						</Button>
 					)}
 					<Box display="flex" gap={1}>
-						<Button onClick={() => setSignupDialogId(null)}>Avbryt</Button>
+						<Button onClick={() => setSignupDialogId(null)}>
+							{t("common.cancel", "Avbryt")}
+						</Button>
 						<Button variant="contained" onClick={handleSignupConfirm}>
-							Anmäl
+							{t("signup.submit", "Anmäl")}
 						</Button>
 					</Box>
 				</DialogActions>
@@ -1193,31 +1236,34 @@ function RequestsPage() {
 				fullWidth
 				maxWidth="xs"
 			>
-				<DialogTitle>Anmäl någon annan</DialogTitle>
+				<DialogTitle>{t("onBehalf.title", "Anmäl någon annan")}</DialogTitle>
 				<DialogContent>
 					<Stack spacing={2} sx={{ mt: 1 }}>
 						<TextField
-							label="Namn"
+							label={t("onBehalf.nameLabel", "Namn")}
 							fullWidth
 							required
 							value={onBehalfName}
 							onChange={(e) => setOnBehalfName(e.target.value)}
 						/>
 						<TextField
-							label="Vilken scoutkår tillhör personen?"
+							label={t(
+								"onBehalf.scoutGroupLabel",
+								"Vilken scoutkår tillhör personen?",
+							)}
 							fullWidth
 							required
 							value={onBehalfScoutGroup}
 							onChange={(e) => setOnBehalfScoutGroup(e.target.value)}
 						/>
 						<TextField
-							label="Telefonnummer (valfritt)"
+							label={t("signup.phoneLabel", "Telefonnummer (valfritt)")}
 							fullWidth
 							value={onBehalfPhone}
 							onChange={(e) => setOnBehalfPhone(e.target.value)}
 						/>
 						<TextField
-							label="Kommentar (valfri)"
+							label={t("signup.commentLabel", "Kommentar (valfri)")}
 							fullWidth
 							multiline
 							rows={2}
@@ -1227,13 +1273,15 @@ function RequestsPage() {
 					</Stack>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setOnBehalfRequestId(null)}>Avbryt</Button>
+					<Button onClick={() => setOnBehalfRequestId(null)}>
+						{t("common.cancel", "Avbryt")}
+					</Button>
 					<Button
 						variant="contained"
 						onClick={handleOnBehalfConfirm}
 						disabled={!onBehalfName.trim() || !onBehalfScoutGroup.trim()}
 					>
-						Anmäl
+						{t("signup.submit", "Anmäl")}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1244,11 +1292,17 @@ function RequestsPage() {
 				fullWidth
 				maxWidth="xs"
 			>
-				<DialogTitle>Ta bort {kickTarget?.userName}?</DialogTitle>
+				<DialogTitle>
+					{t("kick.title", "Ta bort {name}?", {
+						name: kickTarget?.userName ?? "",
+					})}
+				</DialogTitle>
 				<DialogContent>
-					<DialogContentText>Ange anledning (obligatoriskt).</DialogContentText>
+					<DialogContentText>
+						{t("kick.prompt", "Ange anledning (obligatoriskt).")}
+					</DialogContentText>
 					<TextField
-						label="Anledning"
+						label={t("kick.reasonLabel", "Anledning")}
 						fullWidth
 						multiline
 						rows={3}
@@ -1257,17 +1311,22 @@ function RequestsPage() {
 						sx={{ mt: 1 }}
 					/>
 					<DialogContentText sx={{ mt: 1 }}>
-						Tänk på att motiveringen syns för personen du tar bort.
+						{t(
+							"kick.notice",
+							"Tänk på att motiveringen syns för personen du tar bort.",
+						)}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setKickTarget(null)}>Avbryt</Button>
+					<Button onClick={() => setKickTarget(null)}>
+						{t("common.cancel", "Avbryt")}
+					</Button>
 					<Button
 						color="error"
 						disabled={!kickReason.trim()}
 						onClick={handleKickConfirm}
 					>
-						Ta bort
+						{t("common.remove", "Ta bort")}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1276,15 +1335,19 @@ function RequestsPage() {
 				open={pendingWithdrawId !== null}
 				onClose={() => setPendingWithdrawId(null)}
 			>
-				<DialogTitle>Avanmäl dig?</DialogTitle>
+				<DialogTitle>{t("withdraw.title", "Avanmäl dig?")}</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Är du säker på att du vill avanmäla dig? Tänk på att personen du
-						anmält dig till troligtvis räknar med att du kommer.
+						{t(
+							"withdraw.body",
+							"Är du säker på att du vill avanmäla dig? Tänk på att personen du anmält dig till troligtvis räknar med att du kommer.",
+						)}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setPendingWithdrawId(null)}>Avbryt</Button>
+					<Button onClick={() => setPendingWithdrawId(null)}>
+						{t("common.cancel", "Avbryt")}
+					</Button>
 					<Button
 						color="warning"
 						variant="contained"
@@ -1294,7 +1357,7 @@ function RequestsPage() {
 							setPendingWithdrawId(null);
 						}}
 					>
-						Avanmäl
+						{t("withdraw.confirm", "Avanmäl")}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1303,17 +1366,21 @@ function RequestsPage() {
 				open={pendingDeleteId !== null}
 				onClose={() => setPendingDeleteId(null)}
 			>
-				<DialogTitle>Avbryt förfrågan?</DialogTitle>
+				<DialogTitle>{t("delete.title", "Avbryt förfrågan?")}</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Är du säker på att du vill avbryta förfrågan? Det går inte att
-						ångra.
+						{t(
+							"delete.body",
+							"Är du säker på att du vill avbryta förfrågan? Det går inte att ångra.",
+						)}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setPendingDeleteId(null)}>Avbryt</Button>
+					<Button onClick={() => setPendingDeleteId(null)}>
+						{t("common.cancel", "Avbryt")}
+					</Button>
 					<Button color="error" onClick={handleDeleteConfirm}>
-						Ta bort
+						{t("common.remove", "Ta bort")}
 					</Button>
 				</DialogActions>
 			</Dialog>

@@ -1,5 +1,6 @@
 import { Box, Container, Typography } from "@mui/material";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useTranslate } from "@tolgee/react";
 import { UserContext } from "#/lib/user-context";
 import { getUserStatus } from "#/server/auth";
 
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function Unauthorized() {
+	const { t } = useTranslate("platsbank");
 	return (
 		<Box
 			display="flex"
@@ -25,10 +27,13 @@ function Unauthorized() {
 			gap={2}
 		>
 			<Typography variant="h4" component="h1">
-				Inloggningen misslyckades
+				{t("auth.failedTitle", "Inloggningen misslyckades")}
 			</Typography>
 			<Typography variant="body1" color="text.secondary">
-				Vi kunde inte verifiera din inloggning. Försök logga in igen.
+				{t(
+					"auth.failedBody",
+					"Vi kunde inte verifiera din inloggning. Försök logga in igen.",
+				)}
 			</Typography>
 		</Box>
 	);

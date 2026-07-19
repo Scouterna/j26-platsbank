@@ -6,12 +6,8 @@ import {
 	FormGroup,
 	Typography,
 } from "@mui/material";
+import { useTranslate } from "@tolgee/react";
 import type { RequestType } from "#/lib/permissions";
-
-const TYPE_LABELS: Record<RequestType, string> = {
-	leader: "Ledare",
-	staff: "Funktionär",
-};
 
 interface RequestTypeFieldProps {
 	/** Audiences the current user is allowed to assign. */
@@ -33,21 +29,31 @@ export function RequestTypeField({
 	onChange,
 	error = false,
 }: RequestTypeFieldProps) {
+	const { t } = useTranslate("platsbank");
+	const typeLabel = (audience: RequestType) =>
+		audience === "staff"
+			? t("type.staff", "Funktionär")
+			: t("type.leader", "Ledare");
+
 	// Only creators reach these forms, so this is effectively always true; kept
 	// as a defensive fallback for a single assignable audience.
 	const hasChoice = creatableTypes.length > 1;
 
-	const toggle = (t: RequestType) => {
-		onChange(value.includes(t) ? value.filter((v) => v !== t) : [...value, t]);
+	const toggle = (audience: RequestType) => {
+		onChange(
+			value.includes(audience)
+				? value.filter((v) => v !== audience)
+				: [...value, audience],
+		);
 	};
 
 	if (!hasChoice) {
 		return (
 			<Box>
 				<Typography variant="body2" color="text.secondary" mb={1}>
-					Typ av förfrågan
+					{t("type.label", "Typ av förfrågan")}
 				</Typography>
-				<Chip label={TYPE_LABELS[value[0] ?? "leader"]} variant="outlined" />
+				<Chip label={typeLabel(value[0] ?? "leader")} variant="outlined" />
 			</Box>
 		);
 	}
@@ -55,20 +61,20 @@ export function RequestTypeField({
 	return (
 		<Box>
 			<Typography variant="body2" color="text.secondary" mb={1}>
-				Vem ska se förfrågan?
+				{t("type.audienceLabel", "Vem ska se förfrågan?")}
 			</Typography>
 			<FormGroup>
-				{creatableTypes.map((t) => (
+				{creatableTypes.map((audience) => (
 					<FormControlLabel
-						key={t}
+						key={audience}
 						control={
 							<Checkbox
-								checked={value.includes(t)}
-								onChange={() => toggle(t)}
+								checked={value.includes(audience)}
+								onChange={() => toggle(audience)}
 								color="primary"
 							/>
 						}
-						label={TYPE_LABELS[t]}
+						label={typeLabel(audience)}
 					/>
 				))}
 			</FormGroup>
@@ -79,8 +85,11 @@ export function RequestTypeField({
 				mt={0.75}
 			>
 				{error
-					? "Välj minst en – ledare eller funktionär."
-					: "Välj en eller båda. Ledare ser endast ledarpass och funktionärer endast funktionärspass."}
+					? t("type.error", "Välj minst en – ledare eller funktionär.")
+					: t(
+							"type.help",
+							"Välj en eller båda. Ledare ser endast ledarpass och funktionärer endast funktionärspass.",
+						)}
 			</Typography>
 		</Box>
 	);

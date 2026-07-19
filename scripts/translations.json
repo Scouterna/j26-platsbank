@@ -1,0 +1,211 @@
+{
+	"appBar.requests": { "sv": "Förfrågningar", "en": "Requests" },
+	"appBar.newRequest": { "sv": "Ny förfrågan", "en": "New request" },
+	"appBar.editRequest": { "sv": "Redigera förfrågan", "en": "Edit request" },
+	"appBar.refresh": { "sv": "Uppdatera", "en": "Refresh" },
+
+	"info.banner": {
+		"sv": "I platsbanken kan funktionärer annonsera behov av hjälp. Du som ledare eller funktionär kan anmäla dig för att hjälpa till. I särskilda fall kan lägerledningen komma att be specifika byar eller kårer att skriva upp sig på vissa pass.",
+		"en": "On the job board, staff can post requests for help. As a leader or staff member you can sign up to help. In special cases, camp management may ask specific villages or scout groups to sign up for certain shifts."
+	},
+	"info.collapsed": { "sv": "Om platsbanken", "en": "About the job board" },
+
+	"tabs.all": { "sv": "Alla", "en": "All" },
+	"tabs.mine": { "sv": "Mina", "en": "Mine" },
+	"tabs.overview": { "sv": "Översikt", "en": "Overview" },
+	"tabs.signedUp": { "sv": "Anmälda", "en": "Signed up" },
+
+	"empty.mine": {
+		"sv": "Du har inga förfrågningar än.",
+		"en": "You have no requests yet."
+	},
+	"empty.signedUp": {
+		"sv": "Du är inte anmäld till någon förfrågan.",
+		"en": "You are not signed up for any request."
+	},
+	"empty.othersCreator": {
+		"sv": "Inga förfrågningar du kan anmäla dig till just nu. Se alla förfrågningar under Översikt.",
+		"en": "No requests you can sign up for right now. See all requests under Overview."
+	},
+	"empty.others": {
+		"sv": "Inga förfrågningar ännu.",
+		"en": "No requests yet."
+	},
+	"empty.upcoming": {
+		"sv": "Inga kommande förfrågningar.",
+		"en": "No upcoming requests."
+	},
+
+	"list.loginPrompt": {
+		"sv": "Logga in för att se förfrågningar.",
+		"en": "Log in to see requests."
+	},
+	"list.noPermission": {
+		"sv": "Du har inte behörighet att se några förfrågningar. Kontakta lägerledningen om du tror att detta är fel.",
+		"en": "You do not have permission to see any requests. Contact camp management if you think this is wrong."
+	},
+
+	"day.today": { "sv": "Idag", "en": "Today" },
+	"day.tomorrow": { "sv": "Imorgon", "en": "Tomorrow" },
+	"section.past": { "sv": "Tidigare", "en": "Past" },
+
+	"type.leader": { "sv": "Ledare", "en": "Leader" },
+	"type.staff": { "sv": "Funktionär", "en": "Staff" },
+	"type.label": { "sv": "Typ av förfrågan", "en": "Type of request" },
+	"type.audienceLabel": {
+		"sv": "Vem ska se förfrågan?",
+		"en": "Who should see the request?"
+	},
+	"type.error": {
+		"sv": "Välj minst en – ledare eller funktionär.",
+		"en": "Choose at least one – leader or staff."
+	},
+	"type.help": {
+		"sv": "Välj en eller båda. Ledare ser endast ledarpass och funktionärer endast funktionärspass.",
+		"en": "Choose one or both. Leaders only see leader shifts and staff only see staff shifts."
+	},
+
+	"card.denied": { "sv": "Nekad", "en": "Denied" },
+	"card.withdraw": { "sv": "Avanmäl", "en": "Withdraw" },
+	"card.full": { "sv": "Fullt", "en": "Full" },
+	"card.signUp": { "sv": "Anmäl dig", "en": "Sign up" },
+
+	"detail.description": { "sv": "Beskrivning", "en": "Description" },
+	"detail.peopleCount": {
+		"sv": "{count}/{needed} {needed, plural, one {person} other {personer}}",
+		"en": "{count}/{needed} {needed, plural, one {person} other {people}}"
+	},
+	"detail.contact": { "sv": "Kontaktperson", "en": "Contact person" },
+	"detail.createdBy": { "sv": "Skapad av {name}", "en": "Created by {name}" },
+	"detail.signedUp": { "sv": "Anmälda", "en": "Signed up" },
+	"detail.blocked": { "sv": "Blockerade", "en": "Blocked" },
+	"detail.removeTooltip": {
+		"sv": "Ta bort från förfrågan",
+		"en": "Remove from request"
+	},
+	"detail.reinstateTooltip": { "sv": "Återinför", "en": "Reinstate" },
+	"detail.deniedAlert": {
+		"sv": "Du har nekats deltagande i denna förfrågan.",
+		"en": "You have been denied participation in this request."
+	},
+	"detail.deniedReason": {
+		"sv": "Anledning: {reason}",
+		"en": "Reason: {reason}"
+	},
+	"detail.edit": { "sv": "Redigera", "en": "Edit" },
+	"detail.cancelRequest": { "sv": "Avbryt förfrågan", "en": "Cancel request" },
+	"detail.withdrawMe": { "sv": "Avanmäl mig", "en": "Withdraw" },
+	"detail.signUpOther": {
+		"sv": "Anmäl någon annan",
+		"en": "Sign someone else up"
+	},
+
+	"signup.title": { "sv": "Anmäl dig", "en": "Sign up" },
+	"signup.phoneLabel": {
+		"sv": "Telefonnummer (valfritt)",
+		"en": "Phone number (optional)"
+	},
+	"signup.phoneHelp": {
+		"sv": "Delas med arrangörer för att underlätta kommunikation.",
+		"en": "Shared with organisers to make communication easier."
+	},
+	"signup.commentLabel": {
+		"sv": "Kommentar (valfri)",
+		"en": "Comment (optional)"
+	},
+	"signup.submit": { "sv": "Anmäl", "en": "Sign up" },
+
+	"onBehalf.title": {
+		"sv": "Anmäl någon annan",
+		"en": "Sign someone else up"
+	},
+	"onBehalf.nameLabel": { "sv": "Namn", "en": "Name" },
+	"onBehalf.scoutGroupLabel": {
+		"sv": "Vilken scoutkår tillhör personen?",
+		"en": "Which scout group is the person from?"
+	},
+
+	"kick.title": { "sv": "Ta bort {name}?", "en": "Remove {name}?" },
+	"kick.prompt": {
+		"sv": "Ange anledning (obligatoriskt).",
+		"en": "Provide a reason (required)."
+	},
+	"kick.reasonLabel": { "sv": "Anledning", "en": "Reason" },
+	"kick.notice": {
+		"sv": "Tänk på att motiveringen syns för personen du tar bort.",
+		"en": "Note that the reason is visible to the person you remove."
+	},
+
+	"withdraw.title": { "sv": "Avanmäl dig?", "en": "Withdraw?" },
+	"withdraw.body": {
+		"sv": "Är du säker på att du vill avanmäla dig? Tänk på att personen du anmält dig till troligtvis räknar med att du kommer.",
+		"en": "Are you sure you want to withdraw? The person you signed up with is probably counting on you."
+	},
+	"withdraw.confirm": { "sv": "Avanmäl", "en": "Withdraw" },
+
+	"delete.title": { "sv": "Avbryt förfrågan?", "en": "Cancel request?" },
+	"delete.body": {
+		"sv": "Är du säker på att du vill avbryta förfrågan? Det går inte att ångra.",
+		"en": "Are you sure you want to cancel the request? This cannot be undone."
+	},
+
+	"common.cancel": { "sv": "Avbryt", "en": "Cancel" },
+	"common.remove": { "sv": "Ta bort", "en": "Remove" },
+
+	"form.titleLabel": { "sv": "Titel", "en": "Title" },
+	"form.descriptionHelp": {
+		"sv": "Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
+		"en": "Describe what the task involves and what the volunteer needs to bring or wear."
+	},
+	"form.descriptionLabel": { "sv": "Beskrivning", "en": "Description" },
+	"form.dateLabel": { "sv": "Datum", "en": "Date" },
+	"form.startTimeLabel": { "sv": "Starttid", "en": "Start time" },
+	"form.endTimeLabel": { "sv": "Sluttid", "en": "End time" },
+	"form.peopleNeededLabel": { "sv": "Antal behövda", "en": "Number needed" },
+	"form.locationLabel": { "sv": "Plats", "en": "Location" },
+	"form.locationPlaceholder": {
+		"sv": "t.ex. Gå till blå flaggan på parkeringen",
+		"en": "e.g. Go to the blue flag in the car park"
+	},
+	"form.locationHelp": {
+		"sv": "Beskriv noggrant var volontären ska infinna sig.",
+		"en": "Describe carefully where the volunteer should go."
+	},
+	"form.contactNameLabel": {
+		"sv": "Kontaktperson (valfritt)",
+		"en": "Contact person (optional)"
+	},
+	"form.contactPhoneLabel": {
+		"sv": "Telefonnummer (valfritt)",
+		"en": "Phone number (optional)"
+	},
+	"form.create": { "sv": "Skapa förfrågan", "en": "Create request" },
+	"form.save": { "sv": "Spara ändringar", "en": "Save changes" },
+	"form.saving": { "sv": "Sparar...", "en": "Saving..." },
+
+	"error.mustBeFuture": {
+		"sv": "Förfrågan måste vara i framtiden.",
+		"en": "The request must be in the future."
+	},
+	"error.endAfterStart": {
+		"sv": "Sluttiden måste vara efter starttiden.",
+		"en": "The end time must be after the start time."
+	},
+	"error.generic": {
+		"sv": "Något gick fel. Försök igen.",
+		"en": "Something went wrong. Please try again."
+	},
+	"error.notFoundOrForbidden": {
+		"sv": "Förfrågan hittades inte eller du saknar behörighet.",
+		"en": "Request not found or you lack permission."
+	},
+
+	"auth.failedTitle": {
+		"sv": "Inloggningen misslyckades",
+		"en": "Login failed"
+	},
+	"auth.failedBody": {
+		"sv": "Vi kunde inte verifiera din inloggning. Försök logga in igen.",
+		"en": "We could not verify your login. Please try logging in again."
+	}
+}
