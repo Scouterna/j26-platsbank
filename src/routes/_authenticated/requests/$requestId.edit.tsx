@@ -10,6 +10,11 @@ import { useTranslate } from "@tolgee/react";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useRef, useState } from "react";
+import {
+	type BilingualContent,
+	BilingualContentFields,
+	isBilingualComplete,
+} from "#/components/bilingual-content-fields";
 import { RequestTypeField } from "#/components/request-type-field";
 import {
 	canManageRequest,
@@ -50,13 +55,22 @@ function EditRequestPage() {
 	}
 
 	const initial = {
-		title: req.title,
-		description: req.description,
+		content: {
+			sv: {
+				title: req.title,
+				description: req.description,
+				location: req.location ?? "",
+			},
+			en: {
+				title: req.titleEn,
+				description: req.descriptionEn,
+				location: req.locationEn ?? "",
+			},
+		} satisfies BilingualContent,
 		date: dayjs(req.startTime),
 		startTime: dayjs(req.startTime),
 		endTime: dayjs(req.endTime),
 		peopleNeeded: req.peopleNeeded,
-		location: req.location ?? "",
 		contactName: req.contactName ?? "",
 		contactPhone: req.contactPhone ?? "",
 		types: normalizeRequestTypes(req.types),
@@ -72,13 +86,11 @@ function EditRequestPage() {
 }
 
 interface FormValues {
-	title: string;
-	description: string;
+	content: BilingualContent;
 	date: Dayjs;
 	startTime: Dayjs;
 	endTime: Dayjs;
 	peopleNeeded: number;
-	location: string;
 	contactName: string;
 	contactPhone: string;
 	types: RequestType[];
@@ -99,15 +111,15 @@ function EditForm({
 	const [types, setTypes] = useState<RequestType[]>(initial.types);
 	const [typesError, setTypesError] = useState(false);
 	const typesFieldRef = useRef<HTMLDivElement>(null);
-	const [title, setTitle] = useState(initial.title);
-	const [description, setDescription] = useState(initial.description);
+	const [content, setContent] = useState<BilingualContent>(initial.content);
+	const [contentError, setContentError] = useState(false);
+	const contentFieldRef = useRef<HTMLDivElement>(null);
 	const [date, setDate] = useState<Dayjs | null>(initial.date);
 	const [startTime, setStartTime] = useState<Dayjs | null>(initial.startTime);
 	const [endTime, setEndTime] = useState<Dayjs | null>(initial.endTime);
 	const [peopleNeeded, setPeopleNeeded] = useState(
 		String(initial.peopleNeeded),
 	);
-	const [location, setLocation] = useState(initial.location);
 	const [contactName, setContactName] = useState(initial.contactName);
 	const [contactPhone, setContactPhone] = useState(initial.contactPhone);
 	const [submitting, setSubmitting] = useState(false);
@@ -115,8 +127,15 @@ function EditForm({
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title || !description || !location || !date || !startTime || !endTime)
+		if (!date || !startTime || !endTime) return;
+		if (!isBilingualComplete(content)) {
+			setContentError(true);
+			contentFieldRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
 			return;
+		}
 		if (types.length === 0) {
 			setTypesError(true);
 			typesFieldRef.current?.scrollIntoView({
@@ -146,12 +165,15 @@ function EditForm({
 			await updateRequest({
 				data: {
 					id: requestId,
-					title,
-					description,
+					title: content.sv.title,
+					titleEn: content.en.title,
+					description: content.sv.description,
+					descriptionEn: content.en.description,
+					location: content.sv.location,
+					locationEn: content.en.location,
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
-					location,
 					contactName: contactName || undefined,
 					contactPhone: contactPhone || undefined,
 					types,
@@ -180,33 +202,14 @@ function EditForm({
 								error={typesError}
 							/>
 						</Box>
-						<TextField
-							label={t("form.titleLabel", "Titel")}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							required
-							fullWidth
-						/>
-						<Box>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								display="block"
-								mb={0.5}
-							>
-								{t(
-									"form.descriptionHelp",
-									"Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
-								)}
-							</Typography>
-							<TextField
-								label={t("form.descriptionLabel", "Beskrivning")}
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								required
-								fullWidth
-								multiline
-								minRows={5}
+						<Box ref={contentFieldRef}>
+							<BilingualContentFields
+								value={content}
+								onChange={(next) => {
+									setContent(next);
+									if (isBilingualComplete(next)) setContentError(false);
+								}}
+								showErrors={contentError}
 							/>
 						</Box>
 						<DatePicker
@@ -242,21 +245,6 @@ function EditForm({
 								htmlInput: { min: 1 },
 								inputLabel: { shrink: true },
 							}}
-						/>
-						<TextField
-							label={t("form.locationLabel", "Plats")}
-							value={location}
-							onChange={(e) => setLocation(e.target.value)}
-							required
-							fullWidth
-							placeholder={t(
-								"form.locationPlaceholder",
-								"t.ex. Gå till blå flaggan på parkeringen",
-							)}
-							helperText={t(
-								"form.locationHelp",
-								"Beskriv noggrant var volontären ska infinna sig.",
-							)}
 						/>
 						<Box display="flex" gap={2}>
 							<TextField

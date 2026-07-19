@@ -171,6 +171,10 @@
 		"sv": "Beskriv noggrant var volontären ska infinna sig.",
 		"en": "Describe carefully where the volunteer should go."
 	},
+	"form.bilingualHint": {
+		"sv": "Alla evenemang måste skrivas på både svenska och engelska.",
+		"en": "All events must be written in both Swedish and English."
+	},
 	"form.contactNameLabel": {
 		"sv": "Kontaktperson (valfritt)",
 		"en": "Contact person (optional)"

@@ -9,12 +9,18 @@ datasource db {
 
 model Request {
   id           String          @id @default(uuid())
-  title        String
-  description  String
+  // Swedish is the source language; the *En fields hold the mandatory English
+  // translation. Both languages are required to publish (enforced in the
+  // create/update server functions). Display picks a language at read time.
+  title         String
+  titleEn       String
+  description   String
+  descriptionEn String
   startTime    DateTime
   endTime      DateTime
   peopleNeeded Int
   location     String
+  locationEn   String
   contactName  String?
   contactPhone String?
   createdBy    String

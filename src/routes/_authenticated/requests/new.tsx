@@ -10,6 +10,12 @@ import { useTranslate } from "@tolgee/react";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useRef, useState } from "react";
+import {
+	type BilingualContent,
+	BilingualContentFields,
+	emptyBilingualContent,
+	isBilingualComplete,
+} from "#/components/bilingual-content-fields";
 import { RequestTypeField } from "#/components/request-type-field";
 import { getCapabilities, type RequestType } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
@@ -33,13 +39,15 @@ function NewRequestPage() {
 	const [types, setTypes] = useState<RequestType[]>([]);
 	const [typesError, setTypesError] = useState(false);
 	const typesFieldRef = useRef<HTMLDivElement>(null);
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
+	const [content, setContent] = useState<BilingualContent>(
+		emptyBilingualContent,
+	);
+	const [contentError, setContentError] = useState(false);
+	const contentFieldRef = useRef<HTMLDivElement>(null);
 	const [date, setDate] = useState<Dayjs | null>(null);
 	const [startTime, setStartTime] = useState<Dayjs | null>(null);
 	const [endTime, setEndTime] = useState<Dayjs | null>(null);
 	const [peopleNeeded, setPeopleNeeded] = useState("1");
-	const [location, setLocation] = useState("");
 	const [contactName, setContactName] = useState("");
 	const [contactPhone, setContactPhone] = useState("");
 	const [submitting, setSubmitting] = useState(false);
@@ -47,8 +55,15 @@ function NewRequestPage() {
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title || !description || !location || !date || !startTime || !endTime)
+		if (!date || !startTime || !endTime) return;
+		if (!isBilingualComplete(content)) {
+			setContentError(true);
+			contentFieldRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
 			return;
+		}
 		if (types.length === 0) {
 			setTypesError(true);
 			typesFieldRef.current?.scrollIntoView({
@@ -82,12 +97,15 @@ function NewRequestPage() {
 			}
 			await createRequest({
 				data: {
-					title,
-					description,
+					title: content.sv.title,
+					titleEn: content.en.title,
+					description: content.sv.description,
+					descriptionEn: content.en.description,
+					location: content.sv.location,
+					locationEn: content.en.location,
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
-					location,
 					contactName: contactName || undefined,
 					contactPhone: contactPhone || undefined,
 					types,
@@ -116,33 +134,14 @@ function NewRequestPage() {
 								error={typesError}
 							/>
 						</Box>
-						<TextField
-							label={t("form.titleLabel", "Titel")}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							required
-							fullWidth
-						/>
-						<Box>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								display="block"
-								mb={0.5}
-							>
-								{t(
-									"form.descriptionHelp",
-									"Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
-								)}
-							</Typography>
-							<TextField
-								label={t("form.descriptionLabel", "Beskrivning")}
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								required
-								fullWidth
-								multiline
-								minRows={5}
+						<Box ref={contentFieldRef}>
+							<BilingualContentFields
+								value={content}
+								onChange={(next) => {
+									setContent(next);
+									if (isBilingualComplete(next)) setContentError(false);
+								}}
+								showErrors={contentError}
 							/>
 						</Box>
 						<DatePicker
@@ -178,21 +177,6 @@ function NewRequestPage() {
 								htmlInput: { min: 1 },
 								inputLabel: { shrink: true },
 							}}
-						/>
-						<TextField
-							label={t("form.locationLabel", "Plats")}
-							value={location}
-							onChange={(e) => setLocation(e.target.value)}
-							required
-							fullWidth
-							placeholder={t(
-								"form.locationPlaceholder",
-								"t.ex. Gå till blå flaggan på parkeringen",
-							)}
-							helperText={t(
-								"form.locationHelp",
-								"Beskriv noggrant var volontären ska infinna sig.",
-							)}
 						/>
 						<Box display="flex" gap={2}>
 							<TextField

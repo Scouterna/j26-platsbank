@@ -43,6 +43,10 @@ import {
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
 import {
+	localizeRequestContent,
+	useContentLanguage,
+} from "#/lib/localized-request";
+import {
 	canManageRequest,
 	canViewRoster,
 	getCapabilities,
@@ -150,6 +154,7 @@ type KickTarget = { requestId: string; userId: string; userName: string };
 
 function RequestsPage() {
 	const { t } = useTranslate("platsbank");
+	const contentLang = useContentLanguage();
 	const requests = Route.useLoaderData();
 	const user = useOptionalUser();
 	const router = useRouter();
@@ -532,6 +537,7 @@ function RequestsPage() {
 											// Own events are managed (Redigera/Avbryt) from the
 											// drawer, not booked — so no card sign-up button.
 											const isOwnerThis = canManageRequest(caps, req, user.sub);
+											const loc = localizeRequestContent(req, contentLang);
 
 											return (
 												<Card
@@ -553,7 +559,7 @@ function RequestsPage() {
 																	variant="subtitle1"
 																	fontWeight={600}
 																>
-																	{req.title}
+																	{loc.title}
 																</Typography>
 																<Box
 																	display="flex"
@@ -738,6 +744,10 @@ function RequestsPage() {
 															);
 															const isFull =
 																req.signups.length >= req.peopleNeeded;
+															const loc = localizeRequestContent(
+																req,
+																contentLang,
+															);
 															return (
 																<Card
 																	key={req.id}
@@ -766,7 +776,7 @@ function RequestsPage() {
 																					variant="subtitle1"
 																					fontWeight={500}
 																				>
-																					{req.title}
+																					{loc.title}
 																				</Typography>
 																				<Typography
 																					variant="body2"
@@ -820,6 +830,7 @@ function RequestsPage() {
 				{selectedRequest &&
 					(() => {
 						const req = selectedRequest;
+						const loc = localizeRequestContent(req, contentLang);
 						const isSignedUp = req.signups.some((s) => s.userId === user.sub);
 						const isRemoved = !!req.myBlock;
 						const isFull = req.signups.length >= req.peopleNeeded;
@@ -841,7 +852,7 @@ function RequestsPage() {
 								<Box display="flex" alignItems="flex-start" gap={1} mb={2}>
 									<Box flex={1}>
 										<Typography variant="h6" fontWeight={600}>
-											{req.title}
+											{loc.title}
 										</Typography>
 										<Typography variant="body2" color="text.secondary">
 											{formatDate(req.startTime)}, {formatTime(req.startTime)}–
@@ -859,7 +870,7 @@ function RequestsPage() {
 								<Divider sx={{ mb: 2 }} />
 
 								<Stack spacing={2} flex={1} overflow="auto">
-									{req.description && (
+									{loc.description && (
 										<Box>
 											<Typography
 												variant="overline"
@@ -868,7 +879,7 @@ function RequestsPage() {
 											>
 												{t("detail.description", "Beskrivning")}
 											</Typography>
-											<Typography variant="body2">{req.description}</Typography>
+											<Typography variant="body2">{loc.description}</Typography>
 										</Box>
 									)}
 
@@ -887,10 +898,10 @@ function RequestsPage() {
 											variant="outlined"
 											color={isFull ? "success" : "default"}
 										/>
-										{req.location && (
+										{loc.location && (
 											<Chip
 												icon={<LocationOnIcon />}
-												label={req.location}
+												label={loc.location}
 												size="small"
 												variant="outlined"
 											/>
