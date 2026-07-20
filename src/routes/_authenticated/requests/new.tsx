@@ -6,9 +6,16 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslate } from "@tolgee/react";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/sv";
 import { useRef, useState } from "react";
+import {
+	type BilingualContent,
+	BilingualContentFields,
+	emptyBilingualContent,
+	isBilingualComplete,
+} from "#/components/bilingual-content-fields";
 import { RequestTypeField } from "#/components/request-type-field";
 import { getCapabilities, type RequestType } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
@@ -24,20 +31,23 @@ export const Route = createFileRoute("/_authenticated/requests/new")({
 });
 
 function NewRequestPage() {
-	useAppBarTitle("Ny förfrågan");
+	const { t } = useTranslate("platsbank");
+	useAppBarTitle(t("appBar.newRequest", "Ny förfrågan"));
 	const navigate = useNavigate();
 	const user = useOptionalUser();
 	const { creatableTypes } = getCapabilities(user?.roles ?? []);
 	const [types, setTypes] = useState<RequestType[]>([]);
 	const [typesError, setTypesError] = useState(false);
 	const typesFieldRef = useRef<HTMLDivElement>(null);
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
+	const [content, setContent] = useState<BilingualContent>(
+		emptyBilingualContent,
+	);
+	const [contentError, setContentError] = useState(false);
+	const contentFieldRef = useRef<HTMLDivElement>(null);
 	const [date, setDate] = useState<Dayjs | null>(null);
 	const [startTime, setStartTime] = useState<Dayjs | null>(null);
 	const [endTime, setEndTime] = useState<Dayjs | null>(null);
 	const [peopleNeeded, setPeopleNeeded] = useState("1");
-	const [location, setLocation] = useState("");
 	const [contactName, setContactName] = useState("");
 	const [contactPhone, setContactPhone] = useState("");
 	const [submitting, setSubmitting] = useState(false);
@@ -45,8 +55,15 @@ function NewRequestPage() {
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title || !description || !location || !date || !startTime || !endTime)
+		if (!date || !startTime || !endTime) return;
+		if (!isBilingualComplete(content)) {
+			setContentError(true);
+			contentFieldRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
 			return;
+		}
 		if (types.length === 0) {
 			setTypesError(true);
 			typesFieldRef.current?.scrollIntoView({
@@ -67,23 +84,28 @@ function NewRequestPage() {
 				.minute(endTime.minute())
 				.second(0);
 			if (startDateTime.valueOf() <= Date.now()) {
-				setError("Förfrågan måste vara i framtiden.");
+				setError(t("error.mustBeFuture", "Förfrågan måste vara i framtiden."));
 				setSubmitting(false);
 				return;
 			}
 			if (endDateTime.valueOf() <= startDateTime.valueOf()) {
-				setError("Sluttiden måste vara efter starttiden.");
+				setError(
+					t("error.endAfterStart", "Sluttiden måste vara efter starttiden."),
+				);
 				setSubmitting(false);
 				return;
 			}
 			await createRequest({
 				data: {
-					title,
-					description,
+					title: content.sv.title,
+					titleEn: content.en.title,
+					description: content.sv.description,
+					descriptionEn: content.en.description,
+					location: content.sv.location,
+					locationEn: content.en.location,
 					startTime: startDateTime.toISOString(),
 					endTime: endDateTime.toISOString(),
 					peopleNeeded: Number(peopleNeeded),
-					location,
 					contactName: contactName || undefined,
 					contactPhone: contactPhone || undefined,
 					types,
@@ -91,7 +113,7 @@ function NewRequestPage() {
 			});
 			navigate({ to: "/" });
 		} catch {
-			setError("Något gick fel. Försök igen.");
+			setError(t("error.generic", "Något gick fel. Försök igen."));
 			setSubmitting(false);
 		}
 	}
@@ -112,49 +134,32 @@ function NewRequestPage() {
 								error={typesError}
 							/>
 						</Box>
-						<TextField
-							label="Titel"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							required
-							fullWidth
-						/>
-						<Box>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								display="block"
-								mb={0.5}
-							>
-								Beskriv vad uppgiften innebär och vad volontären behöver ta med
-								sig eller ha på sig.
-							</Typography>
-							<TextField
-								label="Beskrivning"
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								required
-								fullWidth
-								multiline
-								minRows={5}
+						<Box ref={contentFieldRef}>
+							<BilingualContentFields
+								value={content}
+								onChange={(next) => {
+									setContent(next);
+									if (isBilingualComplete(next)) setContentError(false);
+								}}
+								showErrors={contentError}
 							/>
 						</Box>
 						<DatePicker
-							label="Datum"
+							label={t("form.dateLabel", "Datum")}
 							value={date}
 							onChange={setDate}
 							slotProps={{ textField: { required: true, fullWidth: true } }}
 						/>
 						<Box display="flex" gap={2}>
 							<TimePicker
-								label="Starttid"
+								label={t("form.startTimeLabel", "Starttid")}
 								value={startTime}
 								onChange={setStartTime}
 								ampm={false}
 								slotProps={{ textField: { required: true, fullWidth: true } }}
 							/>
 							<TimePicker
-								label="Sluttid"
+								label={t("form.endTimeLabel", "Sluttid")}
 								value={endTime}
 								onChange={setEndTime}
 								ampm={false}
@@ -162,7 +167,7 @@ function NewRequestPage() {
 							/>
 						</Box>
 						<TextField
-							label="Antal behövda"
+							label={t("form.peopleNeededLabel", "Antal behövda")}
 							type="number"
 							value={peopleNeeded}
 							onChange={(e) => setPeopleNeeded(e.target.value)}
@@ -173,24 +178,15 @@ function NewRequestPage() {
 								inputLabel: { shrink: true },
 							}}
 						/>
-						<TextField
-							label="Plats"
-							value={location}
-							onChange={(e) => setLocation(e.target.value)}
-							required
-							fullWidth
-							placeholder="t.ex. Gå till blå flaggan på parkeringen"
-							helperText="Beskriv noggrant var volontären ska infinna sig."
-						/>
 						<Box display="flex" gap={2}>
 							<TextField
-								label="Kontaktperson (valfritt)"
+								label={t("form.contactNameLabel", "Kontaktperson (valfritt)")}
 								value={contactName}
 								onChange={(e) => setContactName(e.target.value)}
 								fullWidth
 							/>
 							<TextField
-								label="Telefonnummer (valfritt)"
+								label={t("form.contactPhoneLabel", "Telefonnummer (valfritt)")}
 								value={contactPhone}
 								onChange={(e) => setContactPhone(e.target.value)}
 								fullWidth
@@ -203,14 +199,16 @@ function NewRequestPage() {
 						)}
 						<Box display="flex" gap={2}>
 							<Button type="submit" variant="contained" disabled={submitting}>
-								{submitting ? "Sparar..." : "Skapa förfrågan"}
+								{submitting
+									? t("form.saving", "Sparar...")
+									: t("form.create", "Skapa förfrågan")}
 							</Button>
 							<Button
 								variant="outlined"
 								onClick={() => navigate({ to: "/" })}
 								disabled={submitting}
 							>
-								Avbryt
+								{t("common.cancel", "Avbryt")}
 							</Button>
 						</Box>
 					</Stack>

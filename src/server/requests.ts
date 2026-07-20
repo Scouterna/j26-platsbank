@@ -93,14 +93,42 @@ export const getRequest = createServerFn({ method: "GET" })
 
 interface CreateRequestInput {
 	title: string;
+	titleEn: string;
 	description: string;
+	descriptionEn: string;
 	startTime: string;
 	endTime: string;
 	peopleNeeded: number;
 	location: string;
+	locationEn: string;
 	contactName?: string;
 	contactPhone?: string;
 	types: RequestType[];
+}
+
+/**
+ * Both Swedish and English are mandatory to publish/save an event. Throws 400
+ * if any of the six translatable fields is blank. Returns the trimmed values.
+ */
+function requireBilingualContent(input: {
+	title: string;
+	titleEn: string;
+	description: string;
+	descriptionEn: string;
+	location: string;
+	locationEn: string;
+}) {
+	const content = {
+		title: input.title.trim(),
+		titleEn: input.titleEn.trim(),
+		description: input.description.trim(),
+		descriptionEn: input.descriptionEn.trim(),
+		location: input.location.trim(),
+		locationEn: input.locationEn.trim(),
+	};
+	if (Object.values(content).some((v) => v === ""))
+		throw new Response("Både svenska och engelska krävs.", { status: 400 });
+	return content;
 }
 
 export const createRequest = createServerFn({ method: "POST" })
@@ -114,14 +142,13 @@ export const createRequest = createServerFn({ method: "POST" })
 			const types = REQUEST_TYPES.filter((t) => data.types.includes(t));
 			if (types.length === 0)
 				throw new Response("Bad Request", { status: 400 });
+			const content = requireBilingualContent(data);
 			return prisma.request.create({
 				data: {
-					title: data.title,
-					description: data.description,
+					...content,
 					startTime: new Date(data.startTime),
 					endTime: new Date(data.endTime),
 					peopleNeeded: data.peopleNeeded,
-					location: data.location,
 					contactName: data.contactName ?? null,
 					contactPhone: data.contactPhone ?? null,
 					types,
@@ -135,11 +162,14 @@ export const createRequest = createServerFn({ method: "POST" })
 interface UpdateRequestInput {
 	id: string;
 	title: string;
+	titleEn: string;
 	description: string;
+	descriptionEn: string;
 	startTime: string;
 	endTime: string;
 	peopleNeeded: number;
 	location: string;
+	locationEn: string;
 	contactName?: string;
 	contactPhone?: string;
 	types: RequestType[];
@@ -162,15 +192,14 @@ export const updateRequest = createServerFn({ method: "POST" })
 			const types = REQUEST_TYPES.filter((t) => data.types.includes(t));
 			if (types.length === 0)
 				throw new Response("Bad Request", { status: 400 });
+			const content = requireBilingualContent(data);
 			return prisma.request.update({
 				where: { id: data.id },
 				data: {
-					title: data.title,
-					description: data.description,
+					...content,
 					startTime: new Date(data.startTime),
 					endTime: new Date(data.endTime),
 					peopleNeeded: data.peopleNeeded,
-					location: data.location,
 					contactName: data.contactName ?? null,
 					contactPhone: data.contactPhone ?? null,
 					types,

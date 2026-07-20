@@ -9,6 +9,8 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider } from "@mui/material";
+import { TolgeeProvider } from "@tolgee/react";
+import { tolgee } from "#/lib/tolgee";
 import { theme } from "../theme";
 
 export const Route = createRootRoute({
@@ -43,20 +45,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<ThemeProvider theme={theme}>
-				<CssBaseline />
-				{children}
-				<TanStackDevtools
-					config={{
-						position: "bottom-right",
-					}}
-					plugins={[
-						{
-							name: "Tanstack Router",
-							render: <TanStackRouterDevtoolsPanel />,
-						},
-					]}
-				/>
-				<Scripts />
+					<CssBaseline />
+					<TolgeeProvider tolgee={tolgee} options={{ useSuspense: false }}>
+						{children}
+					</TolgeeProvider>
+					<TanStackDevtools
+						config={{
+							position: "bottom-right",
+						}}
+						plugins={[
+							{
+								name: "Tanstack Router",
+								render: <TanStackRouterDevtoolsPanel />,
+							},
+						]}
+					/>
+					<Scripts />
 				</ThemeProvider>
 			</body>
 		</html>
