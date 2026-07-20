@@ -70,6 +70,47 @@ To start the local dev environment, run `j26 up`. You'll then be able to access 
 
 After editing `prisma/schema.prisma`, always run `pnpm db:generate`.
 
+## Translations (i18n)
+
+The UI is internationalized with [Tolgee](https://tolgee.io). Languages: **sv, en, uk, nl** (default `sv`). The active language is read from the `j26-language` cookie set by the shell.
+
+- Components call `useTranslate("platsbank")` and render text via `t("key", "<Swedish default>", params?)`.
+- **Swedish is embedded in the code** as the default value of every `t()` call, so the app always renders correct Swedish during SSR/first paint and degrades gracefully if Tolgee never loads. Other languages overlay once Tolgee data is fetched.
+
+### Adding or changing a string
+
+1. In the component, use `t("section.key", "Svensk text", params?)`.
+2. Add the same key to **`scripts/translations.json`** with its `sv` + `en` values.
+3. Run `pnpm tolgee:push`.
+
+The Swedish in `scripts/translations.json` must match the in-code default — keep them in sync.
+
+### Pushing strings to Tolgee
+
+`scripts/push-translations.mjs` (wired as `pnpm tolgee:push`) upserts every key with its `sv` + `en` values. It only sets those two languages, so machine-translated `uk`/`nl` are left untouched. Safe to re-run.
+
+```bash
+pnpm tolgee:push --dry-run   # print all keys, no network
+pnpm tolgee:push --check     # validate credentials only (1 request)
+pnpm tolgee:push             # upload sv + en
+```
+
+Requires `J26_PUBLIC_TOLGEE_API_URL`, `J26_PUBLIC_TOLGEE_PROJECT_ID`, and a write token in `TOLGEE_API_KEY` (a Project API Key with scopes `keys.create` + `translations.edit`, or a Personal Access Token) in `.env.local`.
+
+### Environment variables
+
+The `J26_PUBLIC_` prefix means the value is exposed to the client bundle (see `envPrefix` in `vite.config.ts`).
+
+| Variable | Scope | Purpose |
+|---|---|---|
+| `J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX` | client | Static translation export URL used in production. |
+| `J26_PUBLIC_TOLGEE_API_URL` | client | Tolgee instance URL (dev live fetch + push script). |
+| `J26_PUBLIC_TOLGEE_PROJECT_ID` | client | Tolgee project id. |
+| `J26_PUBLIC_TOLGEE_API_KEY` | client | Optional. Enables dev-mode live fetch + in-context editing. Bundled to client — use a low-scope key. |
+| `TOLGEE_API_KEY` | server | Write token for the push script (preferred over the public key). Never bundled. |
+
+To see non-Swedish languages in dev, set `J26_PUBLIC_TOLGEE_API_KEY`; Tolgee then fetches live from the API and you get in-context editing (alt-click a string).
+
 ## Other commands
 
 ```bash
