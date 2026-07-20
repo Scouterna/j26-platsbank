@@ -34,30 +34,11 @@ export function isBilingualComplete(c: BilingualContent): boolean {
 	return isLangComplete(c.sv) && isLangComplete(c.en);
 }
 
-// Field labels, help texts and placeholders are fixed to the *content*
-// language (they instruct the poster in the language they are writing), so
-// they are intentionally not routed through Tolgee's UI translations.
-const COPY = {
-	sv: {
-		tab: "Svenska",
-		title: "Titel",
-		description: "Beskrivning",
-		location: "Plats",
-		descriptionHelp:
-			"Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
-		locationHelp: "Beskriv noggrant var volontären ska infinna sig.",
-		locationPlaceholder: "t.ex. Gå till blå flaggan på parkeringen",
-	},
-	en: {
-		tab: "English",
-		title: "Title",
-		description: "Description",
-		location: "Location",
-		descriptionHelp:
-			"Describe what the task involves and what the volunteer needs to bring or wear.",
-		locationHelp: "Describe precisely where the volunteer should go.",
-		locationPlaceholder: "e.g. Go to the blue flag by the parking lot",
-	},
+// Tolgee key + Swedish fallback naming each content language, so the tab labels
+// follow the poster's chosen UI language like the rest of this box's chrome.
+const TAB_LABEL = {
+	sv: { key: "form.tabSwedish", fallback: "Svenska" },
+	en: { key: "form.tabEnglish", fallback: "Engelska" },
 } as const;
 
 interface Props {
@@ -84,7 +65,6 @@ export function BilingualContentFields({
 		else if (!isLangComplete(value.en)) setLang("en");
 	}, [showErrors, value.sv, value.en]);
 
-	const copy = COPY[lang];
 	const current = value[lang];
 
 	const set = (field: keyof LangContent, v: string) =>
@@ -95,7 +75,7 @@ export function BilingualContentFields({
 
 	const tabLabel = (l: "sv" | "en") => (
 		<Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-			{COPY[l].tab}
+			{t(TAB_LABEL[l].key, TAB_LABEL[l].fallback)}
 			{isLangComplete(value[l]) ? (
 				<CheckCircleIcon fontSize="small" color="success" />
 			) : (
@@ -122,7 +102,7 @@ export function BilingualContentFields({
 			</Tabs>
 			<Stack spacing={3} sx={{ p: 2 }}>
 				<TextField
-					label={copy.title}
+					label={t("form.titleLabel", "Titel")}
 					value={current.title}
 					onChange={(e) => set("title", e.target.value)}
 					required
@@ -136,10 +116,13 @@ export function BilingualContentFields({
 						display="block"
 						mb={0.5}
 					>
-						{copy.descriptionHelp}
+						{t(
+							"form.descriptionHelp",
+							"Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
+						)}
 					</Typography>
 					<TextField
-						label={copy.description}
+						label={t("form.descriptionLabel", "Beskrivning")}
 						value={current.description}
 						onChange={(e) => set("description", e.target.value)}
 						required
@@ -150,13 +133,19 @@ export function BilingualContentFields({
 					/>
 				</Box>
 				<TextField
-					label={copy.location}
+					label={t("form.locationLabel", "Plats")}
 					value={current.location}
 					onChange={(e) => set("location", e.target.value)}
 					required
 					fullWidth
-					placeholder={copy.locationPlaceholder}
-					helperText={copy.locationHelp}
+					placeholder={t(
+						"form.locationPlaceholder",
+						"t.ex. Gå till blå flaggan på parkeringen",
+					)}
+					helperText={t(
+						"form.locationHelp",
+						"Beskriv noggrant var volontären ska infinna sig.",
+					)}
 					error={missing("location")}
 				/>
 			</Stack>

@@ -1,22 +1,43 @@
 import { Box, Container, Typography } from "@mui/material";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	type ErrorComponentProps,
+	Outlet,
+} from "@tanstack/react-router";
 import { useTranslate } from "@tolgee/react";
 import { UserContext } from "#/lib/user-context";
 import { getUserStatus } from "#/server/auth";
+
+const UNAUTHORIZED = "unauthorized";
 
 export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: async () => {
 		const { user, tokenPresent } = await getUserStatus();
 		// Token present but rejected → deny access
-		if (tokenPresent && !user) throw new Error("unauthorized");
+		if (tokenPresent && !user) throw new Error(UNAUTHORIZED);
 		return { user };
 	},
-	errorComponent: Unauthorized,
+	errorComponent: ErrorBoundary,
 	component: AuthenticatedLayout,
 });
 
-function Unauthorized() {
+function ErrorBoundary({ error }: ErrorComponentProps) {
 	const { t } = useTranslate("platsbank");
+	const isAuthError = error instanceof Error && error.message === UNAUTHORIZED;
+
+	const title = isAuthError
+		? t("auth.failedTitle", "Inloggningen misslyckades")
+		: t("error.genericTitle", "Något gick fel");
+	const body = isAuthError
+		? t(
+				"auth.failedBody",
+				"Vi kunde inte verifiera din inloggning. Försök logga in igen.",
+			)
+		: t(
+				"error.genericBody",
+				"Ett oväntat fel inträffade. Försök igen om en stund.",
+			);
+
 	return (
 		<Box
 			display="flex"
@@ -27,13 +48,10 @@ function Unauthorized() {
 			gap={2}
 		>
 			<Typography variant="h4" component="h1">
-				{t("auth.failedTitle", "Inloggningen misslyckades")}
+				{title}
 			</Typography>
 			<Typography variant="body1" color="text.secondary">
-				{t(
-					"auth.failedBody",
-					"Vi kunde inte verifiera din inloggning. Försök logga in igen.",
-				)}
+				{body}
 			</Typography>
 		</Box>
 	);

@@ -152,6 +152,8 @@
 	"common.cancel": { "sv": "Avbryt", "en": "Cancel" },
 	"common.remove": { "sv": "Ta bort", "en": "Remove" },
 
+	"form.tabSwedish": { "sv": "Svenska", "en": "Swedish" },
+	"form.tabEnglish": { "sv": "Engelska", "en": "English" },
 	"form.titleLabel": { "sv": "Titel", "en": "Title" },
 	"form.descriptionHelp": {
 		"sv": "Beskriv vad uppgiften innebär och vad volontären behöver ta med sig eller ha på sig.",
@@ -202,6 +204,14 @@
 	"error.notFoundOrForbidden": {
 		"sv": "Förfrågan hittades inte eller du saknar behörighet.",
 		"en": "Request not found or you lack permission."
+	},
+	"error.genericTitle": {
+		"sv": "Något gick fel",
+		"en": "Something went wrong"
+	},
+	"error.genericBody": {
+		"sv": "Ett oväntat fel inträffade. Försök igen om en stund.",
+		"en": "An unexpected error occurred. Please try again in a moment."
 	},
 
 	"auth.failedTitle": {
