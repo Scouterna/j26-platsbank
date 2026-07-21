@@ -18,6 +18,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Public Tolgee backend URL. Vite inlines J26_PUBLIC_* vars into the client
+# bundle at build time (envPrefix in vite.config.ts), reading them from the
+# process environment, so it must be present during `pnpm build` below.
+ARG J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX
+ENV J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX=$J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX
+
 # Regenerate Prisma client for the current schema.
 # DATABASE_URL is required by prisma.config.ts at config-load time even
 # though generate never connects to the database.
