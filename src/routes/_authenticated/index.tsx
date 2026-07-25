@@ -42,11 +42,13 @@ import {
 } from "@tanstack/react-router";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
+import { crossesMidnight } from "#/lib/datetime";
 import {
 	localizeRequestContent,
 	useContentLanguage,
 } from "#/lib/localized-request";
 import {
+	canManageAnyRequest,
 	canManageRequest,
 	canViewRoster,
 	getCapabilities,
@@ -99,6 +101,34 @@ function formatTime(d: Date | string) {
 
 function formatDate(d: Date | string) {
 	return new Date(d).toLocaleDateString("sv-SE", { dateStyle: "long" });
+}
+
+/**
+ * Renders a start–end time range. When the request runs past midnight, a "+1"
+ * marker (with an explanatory tooltip) makes it clear the end is on the next
+ * day, so "23:30–01:00" can't be misread as a same-day slot.
+ */
+function TimeRange({
+	start,
+	end,
+	t,
+}: {
+	start: Date | string;
+	end: Date | string;
+	t: TFn;
+}) {
+	return (
+		<>
+			{formatTime(start)}–{formatTime(end)}
+			{crossesMidnight(start, end) && (
+				<Tooltip title={t("card.nextDay", "Passet slutar nästa dag.")}>
+					<Box component="span" sx={{ ml: 0.5, fontWeight: 600 }}>
+						+1
+					</Box>
+				</Tooltip>
+			)}
+		</>
+	);
 }
 
 function getDayKey(d: Date | string) {
@@ -572,8 +602,11 @@ function RequestsPage() {
 																		variant="body2"
 																		color="text.secondary"
 																	>
-																		{formatTime(req.startTime)}–
-																		{formatTime(req.endTime)}
+																		<TimeRange
+																			start={req.startTime}
+																			end={req.endTime}
+																			t={t}
+																		/>
 																	</Typography>
 																	<Chip
 																		icon={<PeopleIcon />}
@@ -782,8 +815,11 @@ function RequestsPage() {
 																					variant="body2"
 																					color="text.secondary"
 																				>
-																					{formatTime(req.startTime)}–
-																					{formatTime(req.endTime)}
+																					<TimeRange
+																						start={req.startTime}
+																						end={req.endTime}
+																						t={t}
+																					/>
 																				</Typography>
 																			</Box>
 																			<Box
@@ -836,13 +872,20 @@ function RequestsPage() {
 						const isFull = req.signups.length >= req.peopleNeeded;
 						const canBookThis = canBookRequest(req);
 						const isOwner = canManageRequest(caps, req, user.sub);
+						// Any organiser gets the FULL owner toolkit (edit, cancel, kick,
+						// unblock, block list) on any request, but only from the Översikt
+						// tab. Owners/admins always have it, in any tab.
+						const canManageThis =
+							isOwner ||
+							(canManageAnyRequest(caps, req, user.sub) && tab === "overview");
 						// Creators may view the roster of any request (read-only unless
 						// they also manage it); managers additionally get the kick action.
 						const canSeeRoster = canViewRoster(caps, req, user.sub);
 						// The roster is a coordination aid, so for non-managers it is
 						// reserved for the dedicated Översikt tab. Managers (owner/admin)
 						// always see it — they need it to kick/manage.
-						const showRoster = isOwner || (canSeeRoster && tab === "overview");
+						const showRoster =
+							canManageThis || (canSeeRoster && tab === "overview");
 						const canOnBehalf = normalizeRequestTypes(req.types).some(
 							(audience) => caps.canBookOnBehalf(audience),
 						);
@@ -855,8 +898,8 @@ function RequestsPage() {
 											{loc.title}
 										</Typography>
 										<Typography variant="body2" color="text.secondary">
-											{formatDate(req.startTime)}, {formatTime(req.startTime)}–
-											{formatTime(req.endTime)}
+											{formatDate(req.startTime)},{" "}
+											<TimeRange start={req.startTime} end={req.endTime} t={t} />
 										</Typography>
 									</Box>
 									<IconButton
@@ -1019,7 +1062,7 @@ function RequestsPage() {
 																</Typography>
 															)}
 														</Box>
-														{isOwner && (
+														{canManageThis && (
 															<Tooltip
 																title={t(
 																	"detail.removeTooltip",
@@ -1047,7 +1090,7 @@ function RequestsPage() {
 										</Box>
 									)}
 
-									{isOwner && req.blocks.length > 0 && (
+									{canManageThis && req.blocks.length > 0 && (
 										<Box>
 											<Typography
 												variant="overline"
@@ -1095,7 +1138,7 @@ function RequestsPage() {
 										</Box>
 									)}
 
-									{!isOwner && isRemoved && (
+									{!canManageThis && isRemoved && (
 										<Alert severity="warning">
 											{t(
 												"detail.deniedAlert",
@@ -1111,7 +1154,7 @@ function RequestsPage() {
 
 								<Box mt={2} pt={2} borderTop={1} borderColor="divider">
 									<Stack spacing={1}>
-										{isOwner ? (
+										{canManageThis ? (
 											<Box display="flex" gap={1}>
 												<Button
 													variant="outlined"

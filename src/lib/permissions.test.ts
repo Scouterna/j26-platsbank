@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	canManageAnyRequest,
 	canManageRequest,
 	canViewRoster,
 	getCapabilities,
@@ -250,5 +251,34 @@ describe("canViewRoster", () => {
 	it("denies a logged-out user", () => {
 		const caps = getCapabilities([]);
 		expect(canViewRoster(caps, req, null)).toBe(false);
+	});
+});
+
+describe("canManageAnyRequest", () => {
+	const req = { createdBy: "owner-1" };
+
+	it("lets an admin manage any request", () => {
+		const caps = getCapabilities([Role.Admin]);
+		expect(canManageAnyRequest(caps, req, "someone-else")).toBe(true);
+	});
+
+	it("lets any organiser manage a request they do not own", () => {
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canManageAnyRequest(caps, req, "not-the-owner")).toBe(true);
+	});
+
+	it("lets an organiser manage their own request", () => {
+		const caps = getCapabilities([Role.CreateAll]);
+		expect(canManageAnyRequest(caps, req, "owner-1")).toBe(true);
+	});
+
+	it("denies a user who can only book (not an organiser)", () => {
+		const caps = getCapabilities([Role.LeaderBook]);
+		expect(canManageAnyRequest(caps, req, "owner-1")).toBe(false);
+	});
+
+	it("denies a logged-out user", () => {
+		const caps = getCapabilities([]);
+		expect(canManageAnyRequest(caps, req, null)).toBe(false);
 	});
 });

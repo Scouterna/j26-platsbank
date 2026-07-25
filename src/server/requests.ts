@@ -4,7 +4,7 @@ import { prisma } from "#/db";
 import { verifyAndGetUser } from "#/lib/auth";
 import { resolveMyBlock } from "#/lib/blocks";
 import {
-	canManageRequest,
+	canManageAnyRequest,
 	canViewRoster,
 	getCapabilities,
 	normalizeRequestTypes,
@@ -49,10 +49,11 @@ export const getRequests = createServerFn({ method: "GET" }).handler(() =>
 		});
 
 		return requests.map((req) => {
-			// Managers (creator/admin) can act on the request — they alone see
-			// the block list. Any creator, however, may view the signup roster
-			// (with contact details) of ANY request to coordinate across passes.
-			const canManage = canManageRequest(caps, req, user?.sub);
+			// Any organiser is a coordinator over every request: they may view the
+			// signup roster (with contact details) AND the block list of ANY
+			// request, so the payload carries both. The client confines the block
+			// list and the management actions to the Översikt tab.
+			const canManage = canManageAnyRequest(caps, req, user?.sub);
 			const canSeeRoster = canViewRoster(caps, req, user?.sub);
 			return {
 				...req,
@@ -185,7 +186,9 @@ export const updateRequest = createServerFn({ method: "POST" })
 				where: { id: data.id },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!canManageRequest(caps, request, user.sub))
+			// Any organiser may manage any request (coordination); the UI limits
+			// this to the Översikt tab, but the server authorises it regardless.
+			if (!canManageAnyRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			// A manager can assign any audience (creation is not per-type); just
 			// require a non-empty set of known types.
@@ -371,7 +374,7 @@ export const kickFromRequest = createServerFn({ method: "POST" })
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!canManageRequest(caps, request, user.sub))
+			if (!canManageAnyRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			const signup = await prisma.requestSignup.findUnique({
 				where: {
@@ -410,7 +413,7 @@ export const unblockFromRequest = createServerFn({ method: "POST" })
 				where: { id: data.requestId },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!canManageRequest(caps, request, user.sub))
+			if (!canManageAnyRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.requestBlock.delete({
 				where: {
@@ -430,7 +433,9 @@ export const deleteRequest = createServerFn({ method: "POST" })
 				where: { id: data.id },
 			});
 			if (!request) throw new Response("Not Found", { status: 404 });
-			if (!canManageRequest(caps, request, user.sub))
+			// Cancelling (deleting) mirrors editing: any organiser may cancel any
+			// request. Surfaced in the UI only from the Översikt tab.
+			if (!canManageAnyRequest(caps, request, user.sub))
 				throw new Response("Forbidden", { status: 403 });
 			return prisma.request.delete({ where: { id: data.id } });
 		}),

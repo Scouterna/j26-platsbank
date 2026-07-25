@@ -17,6 +17,7 @@ import {
 	isBilingualComplete,
 } from "#/components/bilingual-content-fields";
 import { RequestTypeField } from "#/components/request-type-field";
+import { assembleInterval, sameClockTime, spansNextDay } from "#/lib/datetime";
 import { getCapabilities, type RequestType } from "#/lib/permissions";
 import { useAppBarTitle } from "#/lib/use-app-bar-title";
 import { useOptionalUser } from "#/lib/user-context";
@@ -75,23 +76,25 @@ function NewRequestPage() {
 		setSubmitting(true);
 		setError(null);
 		try {
-			const startDateTime = date
-				.hour(startTime.hour())
-				.minute(startTime.minute())
-				.second(0);
-			const endDateTime = date
-				.hour(endTime.hour())
-				.minute(endTime.minute())
-				.second(0);
-			if (startDateTime.valueOf() <= Date.now()) {
-				setError(t("error.mustBeFuture", "Förfrågan måste vara i framtiden."));
+			if (sameClockTime(startTime, endTime)) {
+				setError(
+					t(
+						"error.sameTime",
+						"Sluttiden får inte vara samma som starttiden.",
+					),
+				);
 				setSubmitting(false);
 				return;
 			}
-			if (endDateTime.valueOf() <= startDateTime.valueOf()) {
-				setError(
-					t("error.endAfterStart", "Sluttiden måste vara efter starttiden."),
-				);
+			// An end earlier in the day than the start means the shift runs past
+			// midnight; assembleInterval rolls the end onto the following day.
+			const { start: startDateTime, end: endDateTime } = assembleInterval(
+				date,
+				startTime,
+				endTime,
+			);
+			if (startDateTime.valueOf() <= Date.now()) {
+				setError(t("error.mustBeFuture", "Förfrågan måste vara i framtiden."));
 				setSubmitting(false);
 				return;
 			}
@@ -166,6 +169,15 @@ function NewRequestPage() {
 								slotProps={{ textField: { required: true, fullWidth: true } }}
 							/>
 						</Box>
+						{startTime && endTime && spansNextDay(startTime, endTime) && (
+							<Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+								{date
+									? t("form.nextDayHint", "Passet slutar {date} (dagen efter).", {
+											date: date.add(1, "day").locale("sv").format("D MMMM"),
+										})
+									: t("form.nextDayHintNoDate", "Passet slutar dagen efter.")}
+							</Typography>
+						)}
 						<TextField
 							label={t("form.peopleNeededLabel", "Antal behövda")}
 							type="number"

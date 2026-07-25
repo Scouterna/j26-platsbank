@@ -153,11 +153,29 @@ export function canManageRequest(
  * Whether the user may view a request's signup roster (who is booked, with
  * their contact details). Broader than {@link canManageRequest}: any user who
  * can create events may view the roster of ANY request — not just their own —
- * to coordinate across passes. Viewing grants no management actions
- * (kick/block/edit); those stay gated on `canManageRequest`. A request's
- * manager can always view its roster.
+ * to coordinate across passes. A request's manager can always view its roster.
  */
 export function canViewRoster(
+	caps: Capabilities,
+	request: { createdBy: string },
+	userSub: string | null | undefined,
+): boolean {
+	return canManageRequest(caps, request, userSub) || caps.canCreateAny;
+}
+
+/**
+ * Whether the user may perform EVERY manager action on a given request —
+ * editing, cancelling, and roster management (kick / block / unblock) — even on
+ * requests they did not create. Broader than {@link canManageRequest}: any
+ * organiser (a user who can create events) is a coordinator over ANY request.
+ *
+ * The UI surfaces these actions only from the Översikt (overview) tab, but the
+ * capability itself is tab-agnostic — the server cannot see the active tab, so
+ * it authorises any organiser and relies on the client to confine the affordance
+ * to Översikt (the same split already used for {@link canViewRoster}). Admins
+ * and the request's own creator can always manage it, in any tab.
+ */
+export function canManageAnyRequest(
 	caps: Capabilities,
 	request: { createdBy: string },
 	userSub: string | null | undefined,

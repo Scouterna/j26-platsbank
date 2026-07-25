@@ -66,6 +66,10 @@
 	},
 
 	"card.denied": { "sv": "Nekad", "en": "Denied" },
+	"card.nextDay": {
+		"sv": "Passet slutar nästa dag.",
+		"en": "The shift ends the next day."
+	},
 	"card.withdraw": { "sv": "Avanmäl", "en": "Withdraw" },
 	"card.full": { "sv": "Fullt", "en": "Full" },
 	"card.signUp": { "sv": "Anmäl dig", "en": "Sign up" },
@@ -163,6 +167,14 @@
 	"form.dateLabel": { "sv": "Datum", "en": "Date" },
 	"form.startTimeLabel": { "sv": "Starttid", "en": "Start time" },
 	"form.endTimeLabel": { "sv": "Sluttid", "en": "End time" },
+	"form.nextDayHint": {
+		"sv": "Passet slutar {date} (dagen efter).",
+		"en": "The shift ends {date} (the next day)."
+	},
+	"form.nextDayHintNoDate": {
+		"sv": "Passet slutar dagen efter.",
+		"en": "The shift ends the next day."
+	},
 	"form.peopleNeededLabel": { "sv": "Antal behövda", "en": "Number needed" },
 	"form.locationLabel": { "sv": "Plats", "en": "Location" },
 	"form.locationPlaceholder": {
@@ -193,9 +205,9 @@
 		"sv": "Förfrågan måste vara i framtiden.",
 		"en": "The request must be in the future."
 	},
-	"error.endAfterStart": {
-		"sv": "Sluttiden måste vara efter starttiden.",
-		"en": "The end time must be after the start time."
+	"error.sameTime": {
+		"sv": "Sluttiden får inte vara samma som starttiden.",
+		"en": "The end time can't be the same as the start time."
 	},
 	"error.generic": {
 		"sv": "Något gick fel. Försök igen.",
