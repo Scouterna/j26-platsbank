@@ -42,7 +42,6 @@ import {
 } from "@tanstack/react-router";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
-import { crossesMidnight } from "#/lib/datetime";
 import {
 	localizeRequestContent,
 	useContentLanguage,
@@ -101,34 +100,6 @@ function formatTime(d: Date | string) {
 
 function formatDate(d: Date | string) {
 	return new Date(d).toLocaleDateString("sv-SE", { dateStyle: "long" });
-}
-
-/**
- * Renders a start–end time range. When the request runs past midnight, a "+1"
- * marker (with an explanatory tooltip) makes it clear the end is on the next
- * day, so "23:30–01:00" can't be misread as a same-day slot.
- */
-function TimeRange({
-	start,
-	end,
-	t,
-}: {
-	start: Date | string;
-	end: Date | string;
-	t: TFn;
-}) {
-	return (
-		<>
-			{formatTime(start)}–{formatTime(end)}
-			{crossesMidnight(start, end) && (
-				<Tooltip title={t("card.nextDay", "Passet slutar nästa dag.")}>
-					<Box component="span" sx={{ ml: 0.5, fontWeight: 600 }}>
-						+1
-					</Box>
-				</Tooltip>
-			)}
-		</>
-	);
 }
 
 function getDayKey(d: Date | string) {
@@ -602,11 +573,8 @@ function RequestsPage() {
 																		variant="body2"
 																		color="text.secondary"
 																	>
-																		<TimeRange
-																			start={req.startTime}
-																			end={req.endTime}
-																			t={t}
-																		/>
+																		{formatTime(req.startTime)}–
+																		{formatTime(req.endTime)}
 																	</Typography>
 																	<Chip
 																		icon={<PeopleIcon />}
@@ -815,11 +783,8 @@ function RequestsPage() {
 																					variant="body2"
 																					color="text.secondary"
 																				>
-																					<TimeRange
-																						start={req.startTime}
-																						end={req.endTime}
-																						t={t}
-																					/>
+																					{formatTime(req.startTime)}–
+																					{formatTime(req.endTime)}
 																				</Typography>
 																			</Box>
 																			<Box
@@ -898,8 +863,8 @@ function RequestsPage() {
 											{loc.title}
 										</Typography>
 										<Typography variant="body2" color="text.secondary">
-											{formatDate(req.startTime)},{" "}
-											<TimeRange start={req.startTime} end={req.endTime} t={t} />
+											{formatDate(req.startTime)}, {formatTime(req.startTime)}–
+											{formatTime(req.endTime)}
 										</Typography>
 									</Box>
 									<IconButton

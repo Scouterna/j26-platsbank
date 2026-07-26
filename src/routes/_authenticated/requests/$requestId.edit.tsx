@@ -1,4 +1,11 @@
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import {
+	Alert,
+	Box,
+	Button,
+	Stack,
+	TextField,
+	Typography,
+} from "@mui/material";
 import {
 	DatePicker,
 	LocalizationProvider,
@@ -238,13 +245,13 @@ function EditForm({
 							/>
 						</Box>
 						{startTime && endTime && spansNextDay(startTime, endTime) && (
-							<Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+							<Alert severity="info" sx={{ mt: -1 }}>
 								{date
 									? t("form.nextDayHint", "Passet slutar {date} (dagen efter).", {
 											date: date.add(1, "day").locale("sv").format("D MMMM"),
 										})
 									: t("form.nextDayHintNoDate", "Passet slutar dagen efter.")}
-							</Typography>
+							</Alert>
 						)}
 						<TextField
 							label={t("form.peopleNeededLabel", "Antal behövda")}

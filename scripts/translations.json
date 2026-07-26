@@ -66,10 +66,6 @@
 	},
 
 	"card.denied": { "sv": "Nekad", "en": "Denied" },
-	"card.nextDay": {
-		"sv": "Passet slutar nästa dag.",
-		"en": "The shift ends the next day."
-	},
 	"card.withdraw": { "sv": "Avanmäl", "en": "Withdraw" },
 	"card.full": { "sv": "Fullt", "en": "Full" },
 	"card.signUp": { "sv": "Anmäl dig", "en": "Sign up" },

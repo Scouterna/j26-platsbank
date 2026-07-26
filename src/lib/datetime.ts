@@ -51,17 +51,3 @@ export function assembleInterval(
 	if (!end.isAfter(start)) end = end.add(1, "day");
 	return { start, end };
 }
-
-/** True when the two instants fall on different local calendar days. */
-export function crossesMidnight(
-	start: Date | string,
-	end: Date | string,
-): boolean {
-	const s = new Date(start);
-	const e = new Date(end);
-	return (
-		s.getFullYear() !== e.getFullYear() ||
-		s.getMonth() !== e.getMonth() ||
-		s.getDate() !== e.getDate()
-	);
-}

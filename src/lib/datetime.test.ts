@@ -1,11 +1,6 @@
 import dayjs from "dayjs";
 import { describe, expect, it } from "vitest";
-import {
-	assembleInterval,
-	crossesMidnight,
-	sameClockTime,
-	spansNextDay,
-} from "./datetime";
+import { assembleInterval, sameClockTime, spansNextDay } from "./datetime";
 
 const date = dayjs("2026-07-25T00:00:00");
 const at = (hhmm: string) => dayjs(`2026-01-01T${hhmm}:00`);
@@ -51,19 +46,5 @@ describe("assembleInterval", () => {
 		expect(start.millisecond()).toBe(0);
 		expect(end.second()).toBe(0);
 		expect(end.millisecond()).toBe(0);
-	});
-});
-
-describe("crossesMidnight", () => {
-	it("is true when start and end land on different calendar days", () => {
-		expect(
-			crossesMidnight("2026-07-25T23:30:00", "2026-07-26T01:00:00"),
-		).toBe(true);
-	});
-
-	it("is false for a same-day interval", () => {
-		expect(
-			crossesMidnight("2026-07-25T10:00:00", "2026-07-25T12:00:00"),
-		).toBe(false);
 	});
 });
