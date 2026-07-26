@@ -5,7 +5,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -906,15 +905,20 @@ function RequestsPage() {
 											variant="outlined"
 											color={isFull ? "success" : "default"}
 										/>
-										{loc.location && (
-											<Chip
-												icon={<LocationOnIcon />}
-												label={loc.location}
-												size="small"
-												variant="outlined"
-											/>
-										)}
 									</Box>
+
+									{loc.location && (
+										<Box>
+											<Typography
+												variant="overline"
+												color="text.secondary"
+												display="block"
+											>
+												{t("detail.location", "Plats")}
+											</Typography>
+											<Typography variant="body2">{loc.location}</Typography>
+										</Box>
+									)}
 
 									{(req.contactName || req.contactPhone) && (
 										<Box>

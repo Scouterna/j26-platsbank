@@ -75,6 +75,7 @@
 		"sv": "{count}/{needed} {needed, plural, one {person} other {personer}}",
 		"en": "{count}/{needed} {needed, plural, one {person} other {people}}"
 	},
+	"detail.location": { "sv": "Plats", "en": "Location" },
 	"detail.contact": { "sv": "Kontaktperson", "en": "Contact person" },
 	"detail.createdBy": { "sv": "Skapad av {name}", "en": "Created by {name}" },
 	"detail.signedUp": { "sv": "Anmälda", "en": "Signed up" },
