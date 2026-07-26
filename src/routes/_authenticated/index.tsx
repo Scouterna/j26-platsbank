@@ -890,6 +890,19 @@ function RequestsPage() {
 										</Box>
 									)}
 
+									{loc.location && (
+										<Box>
+											<Typography
+												variant="overline"
+												color="text.secondary"
+												display="block"
+											>
+												{t("detail.location", "Plats")}
+											</Typography>
+											<Typography variant="body2">{loc.location}</Typography>
+										</Box>
+									)}
+
 									<Box display="flex" gap={1} flexWrap="wrap">
 										<Chip
 											icon={<PeopleIcon />}
@@ -906,19 +919,6 @@ function RequestsPage() {
 											color={isFull ? "success" : "default"}
 										/>
 									</Box>
-
-									{loc.location && (
-										<Box>
-											<Typography
-												variant="overline"
-												color="text.secondary"
-												display="block"
-											>
-												{t("detail.location", "Plats")}
-											</Typography>
-											<Typography variant="body2">{loc.location}</Typography>
-										</Box>
-									)}
 
 									{(req.contactName || req.contactPhone) && (
 										<Box>
